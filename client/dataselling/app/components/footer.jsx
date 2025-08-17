@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Phone, Clock, MapPin, MessageCircle, Home, ArrowUpRight, Activity, Mail, Github, Twitter, Linkedin, Send, Sparkles, Globe, Zap } from 'lucide-react';
 
 const Footer = () => {
-  const adminPhone = "+233550447846";
-  const whatsappLink = `https://chat.whatsapp.com/HWtr2JohLxSJfEtIb3pn4t?mode=ac_c`;
+  const adminPhone = "+";
+  const whatsappLink = `https://whatsapp.com/channel/0029VbB174796H4JCaqzq43S`;
 
   return (
     <footer className="relative bg-black border-t border-gray-800">
