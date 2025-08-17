@@ -47,7 +47,7 @@ export default function CreditUserPage() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `https://datamall.onrender.com/api/users?page=${page}&limit=10&search=${search}`,
+        `https://dataswap-ydgo.onrender.com/api/users?page=${page}&limit=10&search=${search}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -101,7 +101,7 @@ export default function CreditUserPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `https://datamall.onrender.com/api/users/${userId}/deposit`,
+        `https://dataswap-ydgo.onrender.com/api/users/${userId}/deposit`,
         {
           amount: parseFloat(amount),
           description: description || `Credit by admin`

@@ -44,7 +44,7 @@ const IShareBundleCards = () => {
   const fetchNetworkAvailability = async () => {
     try {
       setCheckingAvailability(true);
-      const response = await axios.get('https://datamall.onrender.com/api/networks-availability');
+      const response = await axios.get('https://dataswap-ydgo.onrender.com/api/networks-availability');
       
       if (response.data.success) {
         const networks = response.data.networks;
@@ -169,7 +169,7 @@ const IShareBundleCards = () => {
       const dataAmountInGB = parseFloat(bundle.mb) / 1000;
       const reference = `DATA-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
        
-      const processResponse = await axios.post('https://datamall.onrender.com/api/data/process-data-order', {
+      const processResponse = await axios.post('https://dataswap-ydgo.onrender.com/api/data/process-data-order', {
         userId: userId,
         phoneNumber: trimmedPhoneNumber,
         network: 'att',

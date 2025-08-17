@@ -33,7 +33,7 @@ const UserOrdersHistory = () => {
         throw new Error('Authentication token not found');
       }
 
-      const response = await axios.get(`https://datamall.onrender.com/api/data/user-orders/${userId}`, {
+      const response = await axios.get(`https://dataswap-ydgo.onrender.com/api/data/user-orders/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -43,7 +43,7 @@ const TelecelBundleCards = () => {
   const fetchNetworkAvailability = async () => {
     try {
       setCheckingAvailability(true);
-      const response = await axios.get('https://datamall.onrender.com/api/networks-availability');
+      const response = await axios.get('https://dataswap-ydgo.onrender.com/api/networks-availability');
       
       if (response.data.success) {
         setNetworkAvailability(response.data.networks);
@@ -160,7 +160,7 @@ const TelecelBundleCards = () => {
       const dataAmountInGB = parseFloat(bundle.mb) / 1000;
       const reference = `DATA-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
       
-      const processResponse = await axios.post('https://datamall.onrender.com/api/data/process-data-order', {
+      const processResponse = await axios.post('https://dataswap-ydgo.onrender.com/api/data/process-data-order', {
         userId: userId,
         phoneNumber: trimmedPhoneNumber,
         network: bundle.network,

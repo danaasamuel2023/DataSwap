@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Zap, Shield, Clock, TrendingUp, ChevronRight, Star, Users, Globe, Activity, Sparkles, Layers, ArrowRight, ArrowUpRight, Coins, BarChart3, Cpu, Signal, Wifi, Database, Circle, Hexagon, Triangle } from 'lucide-react';
+import { Zap,Wallet , Shield, Clock, TrendingUp, ChevronRight, Star, Users, Globe, Activity, Sparkles, Layers, ArrowRight, ArrowUpRight, Coins, BarChart3, Cpu, Signal, Wifi, Database, Circle, Hexagon, Triangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
