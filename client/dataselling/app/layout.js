@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "DataMall",
+  title: "DataSwap",
   description: "Resell Data and make money",
   openGraph: {
     images: [
@@ -23,7 +23,7 @@ export const metadata = {
         url: '/opengraph-image.jpg', 
         width: 1200,
         height: 630,
-        alt: 'taryn',
+        alt: 'sammm ',
       },
     ],
   },

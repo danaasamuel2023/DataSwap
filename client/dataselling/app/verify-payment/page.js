@@ -33,7 +33,7 @@ function VerifyDepositClient() {
       
       try {
         const response = await axios.get(
-          `https://datamall.onrender.com/api/wallet/verify-payment?reference=${reference}`
+          `https://dataswap-ydgo.onrender.com/api/wallet/verify-payment?reference=${reference}`
         );
         
         if (response.data.success) {
