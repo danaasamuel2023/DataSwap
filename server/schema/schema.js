@@ -21,7 +21,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 const DataOrderSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'UserNASH', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Userjessica', required: true },
   network: { type: String, required: true, enum: ['mtn', 'Tigo', 'Airtel','at','TELECEL','afa-registration'] },
   dataAmount: { type: Number, required: true },
   price: { type: Number, required: true }, // Selling price
@@ -191,12 +191,12 @@ const ProfitAnalyticsSchema = new mongoose.Schema({
 ProfitAnalyticsSchema.index({ date: 1, network: 1 }, { unique: true });
 
 // Create the models
-const User = mongoose.model('UserNASH', UserSchema);
-const DataOrder = mongoose.model('DataOrder', DataOrderSchema);
-const Transaction = mongoose.model("TransactionNASH", TransactionSchema);
-const NetworkAvailability = mongoose.model('NetworkAvailability', NetworkAvailabilitySchema);
-const ProviderPricing = mongoose.model('ProviderPricing', ProviderPricingSchema);
-const ProfitAnalytics = mongoose.model('ProfitAnalytics', ProfitAnalyticsSchema);
+const User = mongoose.model('Userjessica', UserSchema);
+const DataOrder = mongoose.model('DataOrderjessica', DataOrderSchema);
+const Transaction = mongoose.model("Transactionjessica", TransactionSchema);
+const NetworkAvailability = mongoose.model('NetworkAvailabilityjessiac', NetworkAvailabilitySchema);
+const ProviderPricing = mongoose.model('ProviderPricingjessica', ProviderPricingSchema);
+const ProfitAnalytics = mongoose.model('ProfitAnalyticsjessiac', ProfitAnalyticsSchema);
 
 // Helper function to initialize MTN pricing data
 async function initializeMTNPricing() {
