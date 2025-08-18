@@ -22,7 +22,7 @@ const UserSchema = new mongoose.Schema({
 
 const DataOrderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Userjessica', required: true },
-  network: { type: String, required: true, enum: ['mtn', 'Tigo', 'Airtel','at','TELECEL','afa-registration'] },
+  network: { type: String, required: true, enum: ['mtn', 'Tigo', 'Airtel','at','TELECEL','afa-registration','AT_PREMIUM'] },
   dataAmount: { type: Number, required: true },
   price: { type: Number, required: true }, // Selling price
   providerCost: { type: Number }, // Cost from provider
@@ -91,7 +91,7 @@ const NetworkAvailabilitySchema = new mongoose.Schema({
     type: String, 
     required: true, 
     unique: true,
-    enum: ['mtn', 'tigo', 'telecel','at','afa-registration']
+    enum: ['mtn', 'tigo', 'telecel','at','afa-registration', 'AT_PREMIUM']
   },
   available: { 
     type: Boolean, 
@@ -108,7 +108,7 @@ const ProviderPricingSchema = new mongoose.Schema({
   network: {
     type: String,
     required: true,
-    enum: ['mtn', 'tigo', 'telecel', 'at', 'afa-registration']
+    enum: ['mtn', 'tigo', 'telecel', 'at', 'afa-registration','AT_PREMIUM']
   },
   capacity: {
     type: String,
@@ -155,7 +155,7 @@ const ProfitAnalyticsSchema = new mongoose.Schema({
   },
   network: {
     type: String,
-    enum: ['mtn', 'tigo', 'telecel', 'at', 'all'],
+    enum: ['mtn', 'tigo', 'telecel', 'at', 'all', 'afa-registration', 'AT_PREMIUM'],
     required: true
   },
   totalOrders: {

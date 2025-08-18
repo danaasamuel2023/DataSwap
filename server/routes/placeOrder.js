@@ -78,7 +78,23 @@ const PROFIT_CONFIG = {
     '3': { cost: 13.50, sell: 15.00 },
     '5': { cost: 22.50, sell: 25.00 },
     '10': { cost: 45.00, sell: 50.00 }
+  },'AT_PREMIUM': {
+    '1': { cost: 3.95, sell: 3.95 },      // No profit
+    '2': { cost: 8.35, sell: 8.35 },      // No profit
+    '3': { cost: 13.25, sell: 13.25 },    // No profit
+    '4': { cost: 16.50, sell: 16.50 },    // No profit
+    '5': { cost: 19.50, sell: 19.50 },    // No profit
+    '6': { cost: 23.50, sell: 23.50 },    // No profit
+    '8': { cost: 30.50, sell: 30.50 },    // No profit
+    '10': { cost: 38.50, sell: 38.50 },   // No profit
+    '12': { cost: 45.50, sell: 45.50 },   // No profit
+    '15': { cost: 57.50, sell: 57.50 },   // No profit
+    '25': { cost: 95.00, sell: 95.00 },   // No profit
+    '30': { cost: 115.00, sell: 115.00 }, // No profit
+    '40': { cost: 151.00, sell: 151.00 }, // No profit
+    '50': { cost: 190.00, sell: 190.00 }  // No profit
   }
+
 };
 
 // Setup logging
@@ -238,7 +254,8 @@ const mapNetworkToDatamart = (networkType) => {
     'AIRTEL': 'at',
     'AT': 'at',
     'AIRTELTIGO': 'at',
-    'TIGO': 'at'
+    'TIGO': 'at',
+    'AT_PREMIUM': 'AT_PREMIUM',
   };
   
   return networkMap[network] || network.toLowerCase();

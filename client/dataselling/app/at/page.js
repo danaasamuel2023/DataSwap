@@ -50,7 +50,7 @@ const IShareBundleCards = () => {
         const networks = response.data.networks;
         setNetworkAvailability({
           ...networks,
-          ishare: networks.att || networks.ishare
+          ishare: networks.AT_PREMIUM || 'AT_PREMIUM' 
         });
         
         if (!networks.att && !networks.ishare) {
@@ -69,21 +69,21 @@ const IShareBundleCards = () => {
   };
 
   const bundles = [
-    { capacity: '1', mb: '1000', price: '4.15', network: 'ishare' },
-    { capacity: '2', mb: '2000', price: '8.55', network: 'ishare' },
-    { capacity: '3', mb: '3000', price: '13.45', network: 'ishare' },
-    { capacity: '4', mb: '4000', price: '16.70', network: 'ishare' },
-    { capacity: '5', mb: '5000', price: '19.70', network: 'ishare' },
-    { capacity: '6', mb: '6000', price: '23.70', network: 'ishare' },
-    { capacity: '8', mb: '8000', price: '30.70', network: 'ishare' },
-    { capacity: '10', mb: '10000', price: '38.70', network: 'ishare' },
-    { capacity: '12', mb: '12000', price: '45.70', network: 'ishare' },
-    { capacity: '15', mb: '15000', price: '57.70', network: 'ishare' },
-    { capacity: '25', mb: '25000', price: '95.20', network: 'ishare' },
-    { capacity: '30', mb: '30000', price: '115.20', network: 'ishare' },
-    { capacity: '40', mb: '40000', price: '151.20', network: 'ishare' },
-    { capacity: '50', mb: '50000', price: '190.20', network: 'ishare' }
-  ];
+  { capacity: '1', mb: '1000', price: '3.95', network: 'AT_PREMIUM' },
+  { capacity: '2', mb: '2000', price: '8.35', network: 'AT_PREMIUM' },
+  { capacity: '3', mb: '3000', price: '13.25', network: 'AT_PREMIUM' },
+  { capacity: '4', mb: '4000', price: '16.50', network: 'AT_PREMIUM' },
+  { capacity: '5', mb: '5000', price: '19.50', network: 'AT_PREMIUM' },
+  { capacity: '6', mb: '6000', price: '23.50', network: 'AT_PREMIUM' },
+  { capacity: '8', mb: '8000', price: '30.50', network: 'AT_PREMIUM' },
+  { capacity: '10', mb: '10000', price: '38.50', network: 'AT_PREMIUM' },
+  { capacity: '12', mb: '12000', price: '45.50', network: 'AT_PREMIUM' },
+  { capacity: '15', mb: '15000', price: '57.50', network: 'AT_PREMIUM' },
+  { capacity: '25', mb: '25000', price: '95.00', network: 'AT_PREMIUM' },
+  { capacity: '30', mb: '30000', price: '115.00', network: 'AT_PREMIUM' },
+  { capacity: '40', mb: '40000', price: '151.00', network: 'AT_PREMIUM' },
+  { capacity: '50', mb: '50000', price: '190.00', network: 'AT_PREMIUM' }
+];
 
   const validatePhoneNumber = (number) => {
     const trimmedNumber = number.trim();
@@ -172,7 +172,7 @@ const IShareBundleCards = () => {
       const processResponse = await axios.post('https://dataswap-ydgo.onrender.com/api/data/process-data-order', {
         userId: userId,
         phoneNumber: trimmedPhoneNumber,
-        network: 'att',
+        network: 'AT_PREMIUM',
         dataAmount: bundle.mb/1000,
         price: parseFloat(bundle.price),
         reference: reference
