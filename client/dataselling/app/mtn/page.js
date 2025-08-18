@@ -63,19 +63,19 @@ const MTNBundleCards = () => {
   };
 
   const bundles = [
-    { capacity: '1', mb: '1000', price: '4.70', network: 'mtn' },
-    { capacity: '2', mb: '2000', price: '9.40', network: 'mtn' },
-    { capacity: '3', mb: '3000', price: '13.70', network: 'mtn' },
-    { capacity: '4', mb: '4000', price: '18.70', network: 'mtn' },
-    { capacity: '5', mb: '5000', price: '23.70', network: 'mtn' },
-    { capacity: '6', mb: '6000', price: '27.20', network: 'mtn' },
-    { capacity: '8', mb: '8000', price: '35.70', network: 'mtn' },
-    { capacity: '10', mb: '10000', price: '43.70', network: 'mtn' },
-    { capacity: '15', mb: '15000', price: '62.70', network: 'mtn' },
-    { capacity: '20', mb: '20000', price: '83.20', network: 'mtn' },
-    { capacity: '25', mb: '25000', price: '105.20', network: 'mtn' },
-    { capacity: '30', mb: '30000', price: '129.20', network: 'mtn' },
-    { capacity: '40', mb: '40000', price: '166.20', network: 'mtn' },
+    { capacity: '1', mb: '1000', price: '4.50', network: 'mtn' },
+    { capacity: '2', mb: '2000', price: '9.20', network: 'mtn' },
+    { capacity: '3', mb: '3000', price: '13.50', network: 'mtn' },
+    { capacity: '4', mb: '4000', price: '18.60', network: 'mtn' },
+    { capacity: '5', mb: '5000', price: '23.50', network: 'mtn' },
+    { capacity: '6', mb: '6000', price: '27.00', network: 'mtn' },
+    { capacity: '8', mb: '8000', price: '35.50', network: 'mtn' },
+    { capacity: '10', mb: '10000', price: '43.50', network: 'mtn' },
+    { capacity: '15', mb: '15000', price: '62.50', network: 'mtn' },
+    { capacity: '20', mb: '20000', price: '83.00', network: 'mtn' },
+    { capacity: '25', mb: '25000', price: '105.00', network: 'mtn' },
+    { capacity: '30', mb: '30000', price: '129.00', network: 'mtn' },
+    { capacity: '40', mb: '40000', price: '166.00', network: 'mtn' },
     { capacity: '50', mb: '50000', price: '207.20', network: 'mtn' },
     { capacity: '100', mb: '100000', price: '407.20', network: 'mtn' }
   ];
