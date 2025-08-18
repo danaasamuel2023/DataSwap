@@ -122,8 +122,8 @@ const Footer = () => {
                   <Phone size={14} className="text-black" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Call Admin</p>
-                  <p className="text-sm text-gray-300 font-medium">+233 55 044 7846</p>
+                  {/* <p className="text-xs text-gray-500">Call Admin</p>
+                  <p className="text-sm text-gray-300 font-medium">+233 55 044 7846</p> */}
                 </div>
               </a>
 
