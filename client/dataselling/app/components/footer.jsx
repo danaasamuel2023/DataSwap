@@ -193,7 +193,7 @@ const Footer = () => {
                 &copy; {new Date().getFullYear()} <span className="font-semibold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">dataSwap</span>. All rights reserved.
               </p>
               <p className="text-gray-600 text-xs mt-1">
-                Powered by <span className="text-violet-400 font-medium">Taryn</span>
+                Powered by <span className="text-violet-400 font-medium">jessica</span>
               </p>
             </div>
             <div className="flex space-x-6 text-sm">
