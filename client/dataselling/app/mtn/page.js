@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ChevronDown, Smartphone, CheckCircle, AlertCircle, XCircle, Zap, Activity, ShoppingCart, ArrowRight } from 'lucide-react';
+import { ChevronDown, Smartphone, CheckCircle, AlertCircle, XCircle, Zap, Activity, ShoppingCart, ArrowRight, Clock, Wifi, WifiOff } from 'lucide-react';
 
 const MTNBundleCards = () => {
   const [selectedBundle, setSelectedBundle] = useState(null);
@@ -291,7 +291,38 @@ const MTNBundleCards = () => {
           </div>
           
           <div className="p-6">
-            <div className="mb-6 bg-red-900/20 border border-red-500/30 p-4 rounded-xl">
+            {/* Prominent Delivery Time Warning */}
+            <div className="mb-4 bg-gradient-to-r from-orange-900/30 to-red-900/30 border-2 border-orange-500/50 rounded-xl p-4">
+              <div className="text-center mb-3">
+                <div className="flex items-center justify-center mb-2">
+                  <Clock className="text-orange-400 mr-2" size={20} />
+                  <span className="text-orange-400 font-bold text-lg">NOT INSTANT DELIVERY</span>
+                </div>
+                <p className="text-yellow-300 text-sm font-semibold">
+                  Bundle delivery takes time based on network conditions
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-green-900/50 border border-green-400/50 rounded-lg p-2 text-center">
+                  <Wifi className="mx-auto text-green-400 mb-1" size={16} />
+                  <div className="text-green-400 font-bold text-sm">30 MIN</div>
+                  <div className="text-xs text-gray-400">Good</div>
+                </div>
+                <div className="bg-yellow-900/50 border border-yellow-400/50 rounded-lg p-2 text-center">
+                  <Wifi className="mx-auto text-yellow-400 mb-1" size={16} />
+                  <div className="text-yellow-400 font-bold text-sm">1-2 HRS</div>
+                  <div className="text-xs text-gray-400">Moderate</div>
+                </div>
+                <div className="bg-orange-900/50 border border-orange-400/50 rounded-lg p-2 text-center">
+                  <WifiOff className="mx-auto text-orange-400 mb-1" size={16} />
+                  <div className="text-orange-400 font-bold text-sm">3 HRS</div>
+                  <div className="text-xs text-gray-400">Poor</div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mb-4 bg-red-900/20 border border-red-500/30 p-3 rounded-xl">
               <p className="font-bold text-red-400 text-sm text-center">
                 ⚠️ NO REFUNDS for incorrect numbers
               </p>
@@ -348,7 +379,7 @@ const MTNBundleCards = () => {
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-black/90 border border-gray-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden">
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
-            <h2 className="text-xl font-bold text-white text-center">Success!</h2>
+            <h2 className="text-xl font-bold text-white text-center">Order Placed!</h2>
           </div>
           
           <div className="p-6">
@@ -356,12 +387,37 @@ const MTNBundleCards = () => {
               <CheckCircle size={64} />
             </div>
             
-            <div className="text-center mb-6">
+            <div className="text-center mb-4">
               <p className="text-2xl font-bold text-white mb-2">
-                {successDetails.bundleCapacity}GB Purchased
+                {successDetails.bundleCapacity}GB Processing
               </p>
               <p className="text-gray-400">
-                Bundle will be activated on {successDetails.phoneNumber}
+                For: {successDetails.phoneNumber}
+              </p>
+            </div>
+            
+            {/* Delivery Time Reminder */}
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-xl p-4 mb-4">
+              <div className="text-center mb-2">
+                <Clock className="inline mr-1 text-blue-400" size={16} />
+                <span className="text-blue-400 font-semibold">Expected Delivery Time</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <div className="text-green-400 font-bold">30 MIN</div>
+                  <div className="text-gray-500">Good Network</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-yellow-400 font-bold">1-2 HRS</div>
+                  <div className="text-gray-500">Moderate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-orange-400 font-bold">3 HRS</div>
+                  <div className="text-gray-500">Poor Network</div>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-3">
+                You'll receive SMS confirmation once activated
               </p>
             </div>
             
@@ -524,7 +580,7 @@ const MTNBundleCards = () => {
             </li>
             <li className="flex items-start">
               <span className="text-yellow-400 mr-2">•</span>
-              Bundle activation is instant after successful payment
+              You'll receive SMS confirmation once bundle is activated
             </li>
           </ul>
         </div>
