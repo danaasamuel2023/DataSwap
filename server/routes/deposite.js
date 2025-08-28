@@ -363,7 +363,7 @@ router.get("/wallet/transactions", async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching transaction history:", error);
-    return res.status(500).json({ success: false, error: "Failed to fetch transaction history" });
+    return res.status(500).json({ success: false, error: "Failed to fetch transaction historu" });
   }
 });
 
