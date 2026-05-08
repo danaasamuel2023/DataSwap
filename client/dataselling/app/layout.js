@@ -34,14 +34,17 @@ export const metadata = {
 };
 
 // Runs before the page paints — sets data-theme so there's no flash.
+// Default is dark (brand vibe); user toggle persists in localStorage.
 const themeInitScript = `
 (function () {
   try {
     var stored = localStorage.getItem('dataswap-theme');
-    var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var theme = stored || 'dark';
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.colorScheme = theme;
-  } catch (_) {}
+  } catch (_) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
 })();
 `;
 

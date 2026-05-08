@@ -4,14 +4,15 @@ import BundlePurchaseScreen from '../components/bundle-purchase-screen';
 
 const config = {
   id: 'at',
-  title: 'AT Data Bundles',
+  shortName: 'AT iShare',
+  title: 'AT iShare Bundles',
   subtitle: 'Affordable iShare bundles for any AT number.',
   network: 'AT_PREMIUM',
   availabilityKey: 'ishare',
   logoLabel: 'AT',
-  logoBg: '#FFE5E5',
-  logoFg: '#7A0000',
   accent: {
+    tile: '#DC2626',
+    tileText: '#FFFFFF',
     soft: '#FFE5E5',
     text: '#7A0000',
     ring: 'rgba(220,38,38,.25)',

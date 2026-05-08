@@ -4,14 +4,15 @@ import BundlePurchaseScreen from '../components/bundle-purchase-screen';
 
 const config = {
   id: 'telecel',
+  shortName: 'Telecel',
   title: 'Telecel Data Bundles',
   subtitle: 'Fast bundles for any Telecel Ghana number.',
   network: 'TELECEL',
   availabilityKey: 'telecel',
-  logoLabel: 'Tc',
-  logoBg: '#FFE5E5',
-  logoFg: '#7A0000',
+  logoLabel: 'TC',
   accent: {
+    tile: '#E60000',
+    tileText: '#FFFFFF',
     soft: '#FFE5E5',
     text: '#7A0000',
     ring: 'rgba(230,0,0,.25)',

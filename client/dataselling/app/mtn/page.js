@@ -4,14 +4,15 @@ import BundlePurchaseScreen from '../components/bundle-purchase-screen';
 
 const config = {
   id: 'mtn',
+  shortName: 'MTN',
   title: 'MTN Data Bundles',
   subtitle: 'Non-expiry bundles delivered straight to any MTN number.',
   network: 'mtn',
   availabilityKey: 'mtn',
   logoLabel: 'MTN',
-  logoBg: '#FFCB05',
-  logoFg: '#0A1628',
   accent: {
+    tile: '#FFCB05',
+    tileText: '#0A1628',
     soft: '#FFF7D6',
     text: '#7A5800',
     ring: 'rgba(245,158,11,.25)',
