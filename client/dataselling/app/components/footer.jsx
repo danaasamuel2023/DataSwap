@@ -106,9 +106,14 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-[var(--color-line)] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-[var(--color-ink-muted)]">
-            &copy; {year} <span className="font-semibold text-[var(--color-brand-navy)]">DataSwap</span>. All rights reserved.
-          </p>
+          <div className="text-center md:text-left">
+            <p className="text-xs text-[var(--color-ink-muted)]">
+              &copy; {year} <span className="font-semibold text-[var(--color-brand-navy)]">DataSwap</span>. All rights reserved.
+            </p>
+            <p className="mt-1 text-[11px] text-[var(--color-ink-subtle)]">
+              Powered by <span className="font-semibold text-[var(--color-brand-blue-deep)]">Jessinta</span>
+            </p>
+          </div>
           <div className="flex items-center gap-5 text-xs">
             <Link href="#" className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">Privacy</Link>
             <Link href="#" className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">Terms</Link>
