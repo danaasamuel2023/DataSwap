@@ -1,295 +1,156 @@
-// pages/afa-registration.js
-'use client'
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import Head from 'next/head';
+import {
+  IdCard, User, Phone, Calendar, Briefcase, MapPin,
+  Loader2, ArrowRight, ShieldCheck, AlertCircle,
+} from 'lucide-react';
+
+const FIXED_PRICE = 8;
 
 export default function AfaRegistration() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
+
   const [token, setToken] = useState('');
   const [userId, setUserId] = useState('');
-  const [userRole, setUserRole] = useState('');
-  
-  // Form fields
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [idType, setIdType] = useState('Ghana Card');
-  const [idNumber, setIdNumber] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [occupation, setOccupation] = useState('');
-  const [location, setLocation] = useState('');
-  
-  // Fixed price for AFA registration
-  const fixedPrice = 8;
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const [form, setForm] = useState({
+    fullName: '', phoneNumber: '', idType: 'Ghana Card',
+    idNumber: '', dateOfBirth: '', occupation: '', location: '',
+  });
+  const set = (k) => (e) => setForm(s => ({ ...s, [k]: e.target.value }));
 
   useEffect(() => {
-    // Check if dark mode is enabled in system
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setDarkMode(prefersDark);
-
-    // Set up event listener for dark mode changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => setDarkMode(e.matches);
-    mediaQuery.addEventListener('change', handleChange);
-
-    // Get authentication data from localStorage
-    const storedToken = localStorage.getItem('token');
-    const storedUserId = localStorage.getItem('userId');
-    const storedUserRole = localStorage.getItem('userrole');
-
-    if (!storedToken || !storedUserId) {
-      router.push('/Auth'); // Redirect to login if not authenticated
-    } else {
-      setToken(storedToken);
-      setUserId(storedUserId);
-      setUserRole(storedUserRole);
-    }
-
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    const t = localStorage.getItem('token');
+    const u = localStorage.getItem('userId');
+    if (!t || !u) { router.push('/Auth'); return; }
+    setToken(t); setUserId(u);
   }, [router]);
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    setIsLoading(true);
+    setError(''); setSuccess('');
 
-    // Validate all required fields
-    if (!phoneNumber || !fullName || !idType || !idNumber || !dateOfBirth || !occupation || !location) {
-      setError('Please fill in all required fields');
-      setIsLoading(false);
+    const required = ['fullName','phoneNumber','idNumber','dateOfBirth','occupation','location'];
+    if (required.some(k => !form[k])) {
+      setError('Please fill in all required fields.');
       return;
     }
 
+    setLoading(true);
     try {
-      const response = await axios.post(
+      const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL || 'https://bignsah.onrender.com/api/data'}/process-afa-registration`,
         {
-          userId,
-          phoneNumber,
-          fullName,
-          idType,
-          idNumber,
-          dateOfBirth,
-          occupation,
-          location,
-          price: fixedPrice,
-          reference: `AFA-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+          userId, ...form, price: FIXED_PRICE,
+          reference: `AFA-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (response.data.success) {
-        setSuccess('AFA Registration completed successfully!');
-        // Reset form fields
-        setPhoneNumber('');
-        setFullName('');
-        setIdNumber('');
-        setDateOfBirth('');
-        setOccupation('');
-        setLocation('');
-        // Redirect to orders page after 2 seconds
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
+      if (res.data?.success) {
+        setSuccess('AFA registration completed.');
+        setForm({ fullName: '', phoneNumber: '', idType: 'Ghana Card', idNumber: '', dateOfBirth: '', occupation: '', location: '' });
+        setTimeout(() => router.push('/'), 1500);
       } else {
-        setError(response.data.error || 'Failed to process registration');
+        setError(res.data?.error || 'Failed to process registration.');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'An error occurred during registration');
-      console.error('Registration error:', err);
+      setError(err.response?.data?.error || 'An error occurred during registration.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const inputClassName = `w-full px-3 py-2 border rounded-md ${
-    darkMode 
-      ? 'bg-gray-700 border-gray-600 text-white' 
-      : 'bg-gray-50 border-gray-300 text-gray-900'
-  }`;
-
-  const labelClassName = `block text-sm font-medium mb-2 ${
-    darkMode ? 'text-gray-300' : 'text-gray-700'
-  }`;
-
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
-      <Head>
-        <title>AFA Registration</title>
-        <meta name="description" content="Register for AFA service" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
+    <div className="bg-[var(--color-surface-muted)] min-h-[calc(100vh-4rem)] py-12">
+      <div className="container mx-auto px-4 max-w-2xl">
+        <div className="text-center mb-8 animate-fadeInUp">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl brand-orange-gradient text-white shadow-md">
+            <IdCard size={26} />
+          </div>
+          <h1 className="mt-4 text-3xl md:text-4xl font-black text-[var(--color-brand-navy)]">AFA Registration</h1>
+          <p className="mt-2 text-[var(--color-ink-muted)]">
+            Register a new line in minutes &mdash; flat fee of GHS {FIXED_PRICE.toFixed(2)}.
+          </p>
+        </div>
 
-      <div className="container mx-auto px-4 py-10">
-        <div className={`max-w-lg mx-auto ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}>
-          <h1 className={`text-2xl font-bold mb-6 text-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-            AFA Registration
-          </h1>
-
+        <form onSubmit={submit} className="card p-6 sm:p-8 space-y-5">
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 relative dark:bg-red-900 dark:text-red-100">
-              {error}
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <span className="inline-flex items-center gap-1.5"><AlertCircle size={14} /> {error}</span>
             </div>
           )}
-
           {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 relative dark:bg-green-900 dark:text-green-100">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
               {success}
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label htmlFor="fullName" className={labelClassName}>
-                Full Name *
-              </label>
-              <input
-                type="text"
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className={inputClassName}
-                placeholder="Enter your full name"
-                required
-              />
+          <Field label="Full name" icon={<User size={16} />} value={form.fullName}
+                 onChange={set('fullName')} placeholder="Ama Mensah" required />
+
+          <Field label="Phone number" icon={<Phone size={16} />} value={form.phoneNumber}
+                 onChange={set('phoneNumber')} placeholder="024 123 4567" required />
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className="label">ID type</label>
+              <select value={form.idType} onChange={set('idType')} className="input" required>
+                <option value="Ghana Card">Ghana Card</option>
+                <option value="Voter ID">Voter ID</option>
+              </select>
             </div>
-
-            <div className="mb-4">
-              <label htmlFor="phoneNumber" className={labelClassName}>
-                Phone Number *
-              </label>
-              <input
-                type="text"
-                id="phoneNumber"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className={inputClassName}
-                placeholder="Enter phone number"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label htmlFor="idType" className={labelClassName}>
-                  ID Type *
-                </label>
-                <select
-                  id="idType"
-                  value={idType}
-                  onChange={(e) => setIdType(e.target.value)}
-                  className={inputClassName}
-                  required
-                >
-                  <option value="Ghana Card">Ghana Card</option>
-                  {/* <option value="Passport">Passport</option> */}
-                  <option value="Voter ID">Voter ID</option>
-                  {/* <option value="Driver License">Driver License</option> */}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label htmlFor="idNumber" className={labelClassName}>
-                  ID Number *
-                </label>
-                <input
-                  type="text"
-                  id="idNumber"
-                  value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
-                  className={inputClassName}
-                  placeholder="Enter ID number"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="dateOfBirth" className={labelClassName}>
-                Date of Birth *
-              </label>
-              <input
-                type="date"
-                id="dateOfBirth"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className={inputClassName}
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="occupation" className={labelClassName}>
-                Occupation *
-              </label>
-              <input
-                type="text"
-                id="occupation"
-                value={occupation}
-                onChange={(e) => setOccupation(e.target.value)}
-                className={inputClassName}
-                placeholder="Enter your occupation"
-                required
-              />
-            </div>
-
-            <div className="mb-4">
-              <label htmlFor="location" className={labelClassName}>
-                Location *
-              </label>
-              <input
-                type="text"
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className={inputClassName}
-                placeholder="Enter your location"
-                required
-              />
-            </div>
-
-            <div className="mb-6">
-              <label htmlFor="price" className={labelClassName}>
-                Price
-              </label>
-              <div className={inputClassName}>
-                GHC {fixedPrice.toFixed(2)}
-              </div>
-              <p className={`mt-1 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Fixed price for AFA Registration
-              </p>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 
-                ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}
-                ${darkMode ? 'focus:ring-offset-gray-900' : ''}`}
-            >
-              {isLoading ? 'Processing...' : 'Register'}
-            </button>
-          </form>
-
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => router.push('/')}
-              className={`text-sm ${darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-500'}`}
-            >
-              Back to Dashboard
-            </button>
+            <Field label="ID number" icon={<IdCard size={16} />} value={form.idNumber}
+                   onChange={set('idNumber')} placeholder="GHA-XXXXXXXXX-X" required />
           </div>
-        </div>
+
+          <Field label="Date of birth" type="date" icon={<Calendar size={16} />}
+                 value={form.dateOfBirth} onChange={set('dateOfBirth')} required />
+
+          <Field label="Occupation" icon={<Briefcase size={16} />} value={form.occupation}
+                 onChange={set('occupation')} placeholder="Trader" required />
+
+          <Field label="Location" icon={<MapPin size={16} />} value={form.location}
+                 onChange={set('location')} placeholder="Accra, Greater Accra" required />
+
+          <div className="rounded-xl bg-[var(--color-brand-blue-soft)] border border-[rgba(30,136,255,.18)] p-4 flex items-center justify-between">
+            <span className="text-sm text-[var(--color-brand-blue-deep)] font-semibold inline-flex items-center gap-2">
+              <ShieldCheck size={16} /> Registration fee
+            </span>
+            <span className="text-base font-bold text-[var(--color-brand-navy)]">GHS {FIXED_PRICE.toFixed(2)}</span>
+          </div>
+
+          <button type="submit" disabled={loading} className="btn-primary w-full !py-3 disabled:opacity-60">
+            {loading ? (<><Loader2 size={18} className="animate-spin" /> Submitting…</>) : (<>Register <ArrowRight size={18} /></>)}
+          </button>
+
+          <button type="button" onClick={() => router.push('/')}
+                  className="block mx-auto mt-2 text-sm text-[var(--color-brand-blue-deep)] hover:underline">
+            Back to dashboard
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, icon, type = 'text', value, onChange, placeholder, required }) {
+  return (
+    <div>
+      <label className="label">{label}{required && ' *'}</label>
+      <div className="relative">
+        {icon && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ink-subtle)]">{icon}</span>
+        )}
+        <input
+          type={type} value={value} onChange={onChange} placeholder={placeholder}
+          required={required} className={`input ${icon ? 'pl-9' : ''}`}
+        />
       </div>
     </div>
   );

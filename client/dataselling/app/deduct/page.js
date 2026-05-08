@@ -1,512 +1,277 @@
-// pages/admin/users/deduct.js
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
-import { 
-  Users, 
-  MinusCircle, 
-  Search, 
-  ArrowLeft, 
-  AlertCircle,
-  UserCheck,
-  AlertTriangle
-} from 'lucide-react';
 import axios from 'axios';
+import {
+  MinusCircle, Search, ArrowLeft, AlertCircle, CheckCircle2,
+  AlertTriangle, Loader2, Wallet, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 
-export default function DeductUserPage() {
+export default function DeductUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [reason, setReason] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeductLoading, setIsDeductLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
-  // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userrole');
-    
-    if (!token || role !== 'admin') {
-      router.push('/Auth');
-    } else {
-      fetchUsers(1, searchQuery);
-    }
-  }, []);
+    if (!token || role !== 'admin') { router.push('/Auth'); return; }
+    fetchUsers(1, '');
+  }, []); // eslint-disable-line
 
-  // Fetch users
-  const fetchUsers = async (page, search = '') => {
-    setIsLoading(true);
+  async function fetchUsers(p, q = '') {
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `https://bignsah.onrender.com/api/users?page=${page}&limit=10&search=${search}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+      const r = await axios.get(
+        `https://bignsah.onrender.com/api/users?page=${p}&limit=10&search=${q}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      setUsers(response.data.users);
-      setTotalPages(response.data.pagination.pages);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setErrorMessage('Failed to load users. Please try again.');
+      setUsers(r.data.users);
+      setPages(r.data.pagination.pages);
+      setPage(p);
+    } catch (_) {
+      setError('Failed to load users.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }
 
-  // Handle user selection
-  const toggleUserSelection = (userId) => {
-    if (selectedUsers.includes(userId)) {
-      setSelectedUsers(prev => prev.filter(id => id !== userId));
-    } else {
-      setSelectedUsers(prev => [...prev, userId]);
-    }
-  };
+  function toggle(id) {
+    setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  }
 
-  // Handle search
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchUsers(1, searchQuery);
-  };
-
-  // Handle pagination
-  const changePage = (page) => {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-    fetchUsers(page, searchQuery);
-  };
-
-  // Single user deduct function
-  const deductSingleUser = async (userId) => {
-    if (!amount || parseFloat(amount) <= 0) {
-      setErrorMessage('Please enter a valid amount');
-      return;
-    }
-
-    if (!description) {
-      setErrorMessage('Please enter a description for this deduction');
-      return;
-    }
-
-    setIsDeductLoading(true);
-    setSuccessMessage('');
-    setErrorMessage('');
-
+  async function deductOne(id) {
+    if (!amount || parseFloat(amount) <= 0) return setError('Enter a valid amount.');
+    if (!description) return setError('Enter a description (visible to user).');
+    setWorking(true); setSuccess(''); setError('');
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `https://bignsah.onrender.com/api/users/${userId}/deduct`,
+        `https://bignsah.onrender.com/api/users/${id}/deduct`,
         {
-          amount: parseFloat(amount),
-          description: description,
-          reason: reason || 'Administrative deduction'
+          amount: parseFloat(amount), description,
+          reason: reason || 'Administrative deduction',
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      setSuccessMessage('Amount deducted successfully');
-      // Reset form
-      setAmount('');
-      setDescription('');
-      setReason('');
-      
-      // Refresh user list
-      fetchUsers(currentPage, searchQuery);
-    } catch (error) {
-      console.error('Error deducting from user:', error);
-      if (error.response?.status === 400 && error.response?.data?.message === 'Insufficient balance') {
-        setErrorMessage(`User has insufficient balance (${error.response.data.userBalance} GHS)`);
+      setSuccess('Amount deducted.');
+      setAmount(''); setDescription(''); setReason('');
+      fetchUsers(page, search);
+    } catch (err) {
+      if (err.response?.status === 400 && err.response?.data?.message === 'Insufficient balance') {
+        setError(`User has insufficient balance (GHS ${err.response.data.userBalance}).`);
       } else {
-        setErrorMessage(error.response?.data?.message || 'Failed to deduct amount. Please try again.');
+        setError(err.response?.data?.message || 'Failed to deduct.');
       }
-    } finally {
-      setIsDeductLoading(false);
-    }
-  };
+    } finally { setWorking(false); }
+  }
 
-  // Bulk deduct function
-  const deductMultipleUsers = async () => {
-    if (selectedUsers.length === 0) {
-      setErrorMessage('Please select at least one user');
-      return;
-    }
-
-    if (!amount || parseFloat(amount) <= 0) {
-      setErrorMessage('Please enter a valid amount');
-      return;
-    }
-
-    if (!description) {
-      setErrorMessage('Please enter a description for this deduction');
-      return;
-    }
-
-    setIsDeductLoading(true);
-    setSuccessMessage('');
-    setErrorMessage('');
-
+  async function deductMany() {
+    if (!selected.length) return setError('Select at least one user.');
+    if (!amount || parseFloat(amount) <= 0) return setError('Enter a valid amount.');
+    if (!description) return setError('Enter a description (visible to user).');
+    setWorking(true); setSuccess(''); setError('');
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
+      const r = await axios.post(
         `https://bignsah.onrender.com/api/bulk-deduct`,
         {
-          userIds: selectedUsers,
-          amount: parseFloat(amount),
-          description: description,
-          reason: reason || 'Administrative deduction'
+          userIds: selected, amount: parseFloat(amount), description,
+          reason: reason || 'Administrative deduction',
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      const { summary } = response.data;
-      
-      if (summary.failed > 0) {
-        setSuccessMessage(`Successfully deducted from ${summary.successful} users. Failed for ${summary.failed} users (likely due to insufficient balance).`);
-      } else {
-        setSuccessMessage(`Successfully deducted from ${summary.successful} users.`);
-      }
-      
-      // Reset form and selection
-      setSelectedUsers([]);
-      setAmount('');
-      setDescription('');
-      setReason('');
-      
-      // Refresh user list
-      fetchUsers(currentPage, searchQuery);
-    } catch (error) {
-      console.error('Error bulk deducting from users:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to deduct amounts. Please try again.');
-    } finally {
-      setIsDeductLoading(false);
-    }
-  };
+      const { summary } = r.data;
+      setSuccess(
+        summary.failed > 0
+          ? `Deducted from ${summary.successful}; failed for ${summary.failed} (often due to balance).`
+          : `Deducted from ${summary.successful} user(s).`
+      );
+      setSelected([]); setAmount(''); setDescription(''); setReason('');
+      fetchUsers(page, search);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Bulk deduct failed.');
+    } finally { setWorking(false); }
+  }
 
   return (
-    <>
-      <Head>
-        <title>Deduct from User Wallets | Admin Dashboard</title>
-      </Head>
-
-      <div className="container mx-auto px-4 py-8 dark:bg-gray-900 min-h-screen">
-        {/* Improved Header with larger text */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <button 
-              onClick={() => router.back()} 
-              className="mr-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-900 dark:text-white"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <h1 className="text-2xl md:text-3xl font-bold flex items-center text-gray-900 dark:text-white">
-              <MinusCircle className="mr-2 md:mr-3 h-6 w-6 md:h-8 md:w-8 text-red-600 dark:text-red-500" />
-              <span className="flex-shrink-0">Deduct from User Wallets</span>
+    <div className="bg-[var(--color-surface-muted)] min-h-[calc(100vh-4rem)] py-10">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => router.back()} className="p-2 rounded-lg border border-[var(--color-line)] hover:bg-white">
+            <ArrowLeft size={18} className="text-[var(--color-ink)]" />
+          </button>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-[var(--color-ink-subtle)]">Admin</p>
+            <h1 className="text-2xl md:text-3xl font-black text-[var(--color-brand-navy)] inline-flex items-center gap-2">
+              <MinusCircle size={26} className="text-[var(--color-danger)]" /> Deduct from wallets
             </h1>
           </div>
         </div>
 
-        {/* Improved Success Message with dark mode support */}
-        {successMessage && (
-          <div className="bg-green-100 dark:bg-green-900 border-l-4 border-green-600 p-4 md:p-5 mb-6 rounded">
-            <div className="flex items-center">
-              <UserCheck className="h-5 w-5 md:h-6 md:w-6 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" />
-              <p className="text-green-800 dark:text-green-300 font-medium text-base md:text-lg">{successMessage}</p>
-            </div>
+        {success && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 mb-4 inline-flex items-center gap-2">
+            <CheckCircle2 size={16} /> {success}
+          </div>
+        )}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 mb-4 inline-flex items-center gap-2">
+            <AlertCircle size={16} /> {error}
           </div>
         )}
 
-        {/* Improved Error Message with dark mode support */}
-        {errorMessage && (
-          <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-600 p-4 md:p-5 mb-6 rounded">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 md:h-6 md:w-6 text-red-600 dark:text-red-400 mr-3 flex-shrink-0" />
-              <p className="text-red-800 dark:text-red-300 font-medium text-base md:text-lg">{errorMessage}</p>
-            </div>
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Form */}
+          <div className="card p-5">
+            <h2 className="font-bold text-[var(--color-ink)] inline-flex items-center gap-2">
+              Deduction details
+              <AlertTriangle size={14} className="text-amber-500" />
+            </h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          {/* Deduct Form with dark mode support */}
-          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md lg:col-span-1 border border-gray-300 dark:border-gray-700">
-            <div className="flex items-center mb-4 md:mb-5">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Deduction Details</h2>
-              <AlertTriangle className="h-5 w-5 ml-2 text-amber-500" title="This will reduce user's wallet balance" />
+            <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+              This action reduces user wallet balances. Use a clear description &mdash; the user will see it.
             </div>
-            
-            <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md mb-5 border border-amber-200 dark:border-amber-800">
-              <p className="text-amber-800 dark:text-amber-300 text-sm">
-                Warning: This action will deduct funds from user wallet(s). Make sure you have a valid reason and accurate amount.
-              </p>
+
+            <div className="mt-5">
+              <label className="label">Amount (GHS) *</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--color-danger)]">GHS</span>
+                <input type="number" min="0" step="0.01" placeholder="0.00"
+                       value={amount} onChange={(e) => setAmount(e.target.value)} className="input pl-14" />
+              </div>
             </div>
-            
-            <div className="mb-4 md:mb-5">
-              <label className="block text-base font-medium text-gray-800 dark:text-gray-200 mb-2">
-                Amount (GHS) <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount to deduct"
-                min="0"
-                step="0.01"
-                className="w-full p-3 border border-gray-400 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
+
+            <div className="mt-4">
+              <label className="label">Description (visible to user) *</label>
+              <textarea rows="2" value={description} onChange={(e) => setDescription(e.target.value)}
+                        placeholder="e.g. Reversal for failed bundle" className="input resize-none" />
             </div>
-            
-            <div className="mb-4 md:mb-5">
-              <label className="block text-base font-medium text-gray-800 dark:text-gray-200 mb-2">
-                Description <span className="text-red-600">*</span>
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter description (will be visible to user)"
-                rows="2"
-                className="w-full p-3 border border-gray-400 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">This description will be visible to the user</p>
+
+            <div className="mt-4">
+              <label className="label">Internal reason (optional)</label>
+              <textarea rows="2" value={reason} onChange={(e) => setReason(e.target.value)}
+                        placeholder="Internal note, hidden from user" className="input resize-none" />
             </div>
-            
-            <div className="mb-5 md:mb-6">
-              <label className="block text-base font-medium text-gray-800 dark:text-gray-200 mb-2">
-                Internal Reason (Optional)
-              </label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Enter internal reason (not visible to user)"
-                rows="2"
-                className="w-full p-3 border border-gray-400 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">For internal record only, not visible to users</p>
-            </div>
-            
-            <div>
-              <button
-                onClick={deductMultipleUsers}
-                disabled={isDeductLoading || selectedUsers.length === 0}
-                className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-red-700 hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-600 dark:hover:bg-red-700 ${
-                  (isDeductLoading || selectedUsers.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {isDeductLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <MinusCircle className="mr-2 h-5 w-5" />
-                    Deduct from Selected ({selectedUsers.length})
-                  </span>
-                )}
-              </button>
-            </div>
+
+            <button onClick={deductMany} disabled={working || !selected.length}
+                    className="w-full mt-5 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              {working ? <><Loader2 size={16} className="animate-spin" /> Working…</>
+                       : <><MinusCircle size={16} /> Deduct from selected ({selected.length})</>}
+            </button>
           </div>
-          
-          {/* User Selection with dark mode support */}
-          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md lg:col-span-2 border border-gray-300 dark:border-gray-700">
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 md:mb-5 space-y-3 md:space-y-0">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Select Users</h2>
-              
-              <form onSubmit={handleSearch} className="flex w-full md:w-auto">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search users..."
-                  className="w-full md:w-auto p-2 border border-gray-400 dark:border-gray-600 rounded-l-md focus:ring-2 focus:ring-red-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-                <button
-                  type="submit"
-                  className="bg-gray-200 dark:bg-gray-600 p-2 border border-l-0 border-gray-400 dark:border-gray-600 rounded-r-md hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <Search className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                </button>
+
+          {/* Users */}
+          <div className="card p-5 lg:col-span-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+              <h2 className="font-bold text-[var(--color-ink)]">Users</h2>
+              <form onSubmit={(e) => { e.preventDefault(); fetchUsers(1, search); }} className="flex w-full md:w-auto">
+                <div className="relative flex-1 md:w-72">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ink-subtle)]" />
+                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users…" className="input pl-9" />
+                </div>
               </form>
             </div>
-            
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <svg className="animate-spin h-10 w-10 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+
+            {loading ? (
+              <div className="py-16 text-center">
+                <Loader2 size={28} className="mx-auto animate-spin text-[var(--color-danger)]" />
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto shadow-md border border-gray-300 dark:border-gray-700 sm:rounded-lg">
-                  <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
-                    <thead className="bg-gray-100 dark:bg-gray-700">
-                      <tr>
-                        <th className="w-12 px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">
+                        <th className="px-3 py-3 text-left">
                           <input
                             type="checkbox"
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedUsers(users.map(user => user._id));
-                              } else {
-                                setSelectedUsers([]);
-                              }
-                            }}
-                            checked={users.length > 0 && selectedUsers.length === users.length}
-                            className="h-4 w-4 md:h-5 md:w-5 text-red-600 border-gray-400 dark:border-gray-600 rounded focus:ring-red-500"
+                            onChange={(e) => setSelected(e.target.checked ? users.filter(u => u.walletBalance > 0).map(u => u._id) : [])}
+                            checked={users.length > 0 && selected.length === users.filter(u => u.walletBalance > 0).length}
+                            className="h-4 w-4 accent-[var(--color-danger)]"
                           />
                         </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Name
-                        </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Balance
-                        </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Action
-                        </th>
+                        <th className="px-3 py-3 text-left font-semibold">Name</th>
+                        <th className="px-3 py-3 text-left font-semibold">Email</th>
+                        <th className="px-3 py-3 text-left font-semibold">Balance</th>
+                        <th className="px-3 py-3 text-left font-semibold">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-300 dark:divide-gray-700">
-                      {users.length > 0 ? (
-                        users.map((user) => (
-                          <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <input
-                                type="checkbox"
-                                onChange={() => toggleUserSelection(user._id)}
-                                checked={selectedUsers.includes(user._id)}
-                                className="h-4 w-4 md:h-5 md:w-5 text-red-600 border-gray-400 dark:border-gray-600 rounded focus:ring-red-500"
-                                disabled={user.walletBalance <= 0}
-                                title={user.walletBalance <= 0 ? "User has no balance" : ""}
-                              />
+                    <tbody className="divide-y divide-[var(--color-line)]">
+                      {users.length ? users.map(u => {
+                        const noBalance = u.walletBalance <= 0;
+                        return (
+                          <tr key={u._id} className="hover:bg-[var(--color-surface-muted)]/60">
+                            <td className="px-3 py-3">
+                              <input type="checkbox" checked={selected.includes(u._id)} onChange={() => toggle(u._id)}
+                                     disabled={noBalance} title={noBalance ? 'No balance' : ''}
+                                     className="h-4 w-4 accent-[var(--color-danger)] disabled:opacity-50" />
                             </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <div className="text-sm md:text-base font-medium text-gray-900 dark:text-white">{user.name}</div>
+                            <td className="px-3 py-3 font-medium text-[var(--color-ink)]">{u.name}</td>
+                            <td className="px-3 py-3 text-[var(--color-ink-muted)]">{u.email}</td>
+                            <td className="px-3 py-3">
+                              <span className={`inline-flex items-center gap-1.5 font-semibold ${noBalance ? 'text-[var(--color-danger)]' : 'text-[var(--color-brand-navy)]'}`}>
+                                <Wallet size={14} />
+                                GHS {Number(u.walletBalance || 0).toFixed(2)}
+                              </span>
                             </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <div className="text-sm md:text-base text-gray-700 dark:text-gray-300">{user.email}</div>
-                            </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <div className={`text-sm md:text-base font-medium ${user.walletBalance <= 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
-                                GHS {user.walletBalance.toFixed(2)}
-                              </div>
-                            </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap text-sm md:text-base">
-                              <button
-                                onClick={() => deductSingleUser(user._id)}
-                                disabled={isDeductLoading || !amount || !description || user.walletBalance <= 0}
-                                className={`inline-flex items-center px-2 md:px-4 py-1 md:py-2 border border-transparent rounded-md shadow-sm text-sm md:text-base font-medium text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
-                                  (isDeductLoading || !amount || !description || user.walletBalance <= 0) ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                                title={user.walletBalance <= 0 ? "User has no balance" : ""}
-                              >
-                                <MinusCircle className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" />
-                                Deduct
+                            <td className="px-3 py-3">
+                              <button onClick={() => deductOne(u._id)}
+                                      disabled={working || !amount || !description || noBalance}
+                                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                <MinusCircle size={12} /> Deduct
                               </button>
                             </td>
                           </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="5" className="px-4 md:px-6 py-4 text-center text-sm md:text-base text-gray-700 dark:text-gray-300 font-medium">
-                            No users found
-                          </td>
-                        </tr>
+                        );
+                      }) : (
+                        <tr><td colSpan="5" className="px-3 py-8 text-center text-[var(--color-ink-muted)]">No users found.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Improved Pagination with dark mode support */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center mt-4 md:mt-6 overflow-x-auto">
-                    <nav className="inline-flex rounded-md shadow-md">
-                      <button
-                        onClick={() => changePage(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`relative inline-flex items-center px-2 md:px-4 py-1 md:py-2 rounded-l-md border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm md:text-base font-medium ${
-                          currentPage === 1 
-                            ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        Previous
-                      </button>
-                      
-                      {[...Array(totalPages)].map((_, index) => {
-                        // Show limited page numbers on mobile
-                        const pageNum = index + 1;
-                        const showPage = 
-                          pageNum === 1 || 
-                          pageNum === totalPages || 
-                          Math.abs(pageNum - currentPage) <= 1;
-                        
-                        if (!showPage && (
-                          (pageNum === 2 && currentPage > 3) || 
-                          (pageNum === totalPages - 1 && currentPage < totalPages - 2)
-                        )) {
-                          return (
-                            <span 
-                              key={`ellipsis-${index}`}
-                              className="relative inline-flex items-center px-3 md:px-4 py-1 md:py-2 border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm md:text-base"
-                            >
-                              ...
-                            </span>
-                          );
+                {pages > 1 && (
+                  <div className="mt-5 flex items-center justify-center gap-1">
+                    <button onClick={() => fetchUsers(Math.max(1, page - 1), search)} disabled={page === 1}
+                            className="btn-ghost text-sm !py-1.5 !px-3 disabled:opacity-50">
+                      <ChevronLeft size={14} /> Prev
+                    </button>
+                    {[...Array(pages)].map((_, i) => {
+                      const n = i + 1;
+                      const show = n === 1 || n === pages || Math.abs(n - page) <= 1;
+                      if (!show) {
+                        if ((n === 2 && page > 3) || (n === pages - 1 && page < pages - 2)) {
+                          return <span key={`e${i}`} className="px-2 text-[var(--color-ink-subtle)]">…</span>;
                         }
-                        
-                        return showPage ? (
-                          <button
-                            key={pageNum}
-                            onClick={() => changePage(pageNum)}
-                            className={`relative inline-flex items-center px-3 md:px-5 py-1 md:py-2 border border-gray-400 dark:border-gray-600 text-sm md:text-base font-medium ${
-                              currentPage === pageNum
-                                ? 'text-white bg-red-600 dark:bg-red-700'
-                                : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        ) : null;
-                      })}
-                      
-                      <button
-                        onClick={() => changePage(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`relative inline-flex items-center px-2 md:px-4 py-1 md:py-2 rounded-r-md border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm md:text-base font-medium ${
-                          currentPage === totalPages 
-                            ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        Next
-                      </button>
-                    </nav>
+                        return null;
+                      }
+                      return (
+                        <button key={n} onClick={() => fetchUsers(n, search)}
+                                className={`min-w-[34px] px-2 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                                  n === page
+                                    ? 'bg-red-600 text-white'
+                                    : 'bg-white border border-[var(--color-line)] text-[var(--color-ink-muted)] hover:border-[var(--color-line-strong)]'
+                                }`}>
+                          {n}
+                        </button>
+                      );
+                    })}
+                    <button onClick={() => fetchUsers(Math.min(pages, page + 1), search)} disabled={page === pages}
+                            className="btn-ghost text-sm !py-1.5 !px-3 disabled:opacity-50">
+                      Next <ChevronRight size={14} />
+                    </button>
                   </div>
                 )}
               </>
@@ -514,6 +279,6 @@ export default function DeductUserPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

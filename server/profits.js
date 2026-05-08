@@ -10,7 +10,11 @@ const {
   ProfitAnalytics
 } = require('./schema/schema');
 
-const MONGODB_URI = 'mongodb+srv://datamartghana:0246783840sa@cluster0.s33wv2s.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+const MONGODB_URI = process.env.MONGO_URI;
+if (!MONGODB_URI) {
+  console.error('MONGO_URI is not set in environment');
+  process.exit(1);
+}
 
 async function testProfitSystem() {
   try {

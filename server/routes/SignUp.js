@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
         userId: user._id,
         role: user.role // Include role in token for authorization checks
       }, 
-      process.env.JWT_SECRET || 'BiGnAH', 
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
     
@@ -114,7 +114,7 @@ router.get('/profile', async (req, res) => {
     }
     
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'BiGnAH');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Get user by id (exclude password)
     const user = await User.findById(decoded.userId).select('-password');

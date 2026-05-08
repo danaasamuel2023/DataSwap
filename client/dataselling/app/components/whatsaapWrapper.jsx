@@ -1,31 +1,23 @@
-// components/WhatsAppLink.jsx
-import Link from 'next/link'
-import { MessageCircle } from 'lucide-react'
+import Link from 'next/link';
+import { MessageCircle } from 'lucide-react';
 
 const WhatsAppLink = () => {
-  const whatsappLink = "https://whatsapp.com/channel/0029VbB174796H4JCaqzq43S"
-  
+  const whatsappLink = 'https://whatsapp.com/channel/0029VbB174796H4JCaqzq43S';
+
   return (
-    <div className="fixed right-6 bottom-6 z-50">
-      <Link 
+    <div className="fixed right-5 bottom-5 z-40">
+      <Link
         href={whatsappLink}
         target="_blank"
         rel="noopener noreferrer"
-        className="group flex items-center bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+        aria-label="Join our WhatsApp channel"
+        className="group inline-flex items-center gap-2 rounded-full bg-[#25D366] hover:bg-[#1FB855] text-white px-4 py-3 shadow-[0_12px_30px_-10px_rgba(37,211,102,.6)] transition-transform hover:-translate-y-0.5"
       >
-        {/* Circular button for mobile */}
-        <div className="flex items-center justify-center w-14 h-14 md:w-auto md:h-auto md:px-6 md:py-3 md:rounded-lg">
-          <MessageCircle size={24} />
-          <span className="hidden md:inline-block md:ml-2 font-medium">Join Our WhatsApp Group</span>
-        </div>
+        <MessageCircle size={20} className="shrink-0" />
+        <span className="hidden md:inline text-sm font-semibold">Join WhatsApp channel</span>
       </Link>
-      
-      {/* Tooltip for mobile */}
-      <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-sm py-1 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap md:hidden">
-        Join Our WhatsApp Group
-      </div>
     </div>
-  )
-}
+  );
+};
 
-export default WhatsAppLink
+export default WhatsAppLink;

@@ -1,170 +1,117 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
+import { CheckCircle2, XCircle, Loader2, ArrowRight, Wallet } from 'lucide-react';
 
-// Client component that uses useSearchParams
-function VerifyDepositClient() {
-  const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
-  const [message, setMessage] = useState('Verifying your payment...');
-  const [balance, setBalance] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const searchParams = useSearchParams();
+function VerifyClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const reference = searchParams?.get('reference');
-  
-  useEffect(() => {
-    // Check if user prefers dark mode
-    if (typeof window !== 'undefined') {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      // Check localStorage (if user manually set preference)
-      const storedTheme = localStorage.getItem('theme');
-      setDarkMode(storedTheme === 'dark' || (storedTheme !== 'light' && prefersDark));
-    }
 
-    const verifyPayment = async () => {
-      if (!reference) {
-        setStatus('error');
-        setMessage('Payment reference not found. Please try again or contact support.');
-        return;
-      }
-      
+  const [status, setStatus] = useState('verifying'); // 'verifying' | 'success' | 'error'
+  const [message, setMessage] = useState('Verifying your payment…');
+  const [balance, setBalance] = useState(null);
+
+  useEffect(() => {
+    if (!reference) {
+      setStatus('error');
+      setMessage('Payment reference not found. Try again or contact support.');
+      return;
+    }
+    (async () => {
       try {
-        const response = await axios.get(
+        const r = await axios.get(
           `https://dataswap-ydgo.onrender.com/api/wallet/verify-payment?reference=${reference}`
         );
-        
-        if (response.data.success) {
+        if (r.data?.success) {
           setStatus('success');
-          setMessage(response.data.message || 'Payment verified successfully!');
-          setBalance(response.data.balance);
+          setMessage(r.data.message || 'Payment verified successfully.');
+          setBalance(r.data.balance);
         } else {
           setStatus('error');
-          setMessage(response.data.error || 'Payment verification failed. Please try again.');
+          setMessage(r.data?.error || 'Payment verification failed.');
         }
-      } catch (error) {
+      } catch (err) {
         setStatus('error');
-        setMessage(
-          error.response?.data?.error || 
-          'Payment verification failed. Our team has been notified.'
-        );
-        console.error('Verification error:', error);
+        setMessage(err.response?.data?.error || 'Payment verification failed. Our team has been notified.');
       }
-    };
-    
-    verifyPayment();
+    })();
   }, [reference]);
-  
-  const handleDashboardReturn = () => {
-    router.push('/'); // Adjust this to your dashboard route
-  };
 
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    localStorage.setItem('theme', newMode ? 'dark' : 'light');
-  };
-  
-  // Get appropriate background and text colors based on dark mode
-  const getCardBg = () => darkMode ? 'bg-gray-800' : 'bg-white';
-  const getTextColor = () => darkMode ? 'text-white' : 'text-gray-900';
-  const getSubTextColor = () => darkMode ? 'text-gray-300' : 'text-gray-500';
-  const getButtonBg = () => darkMode ? 'bg-blue-700 hover:bg-blue-800' : 'bg-blue-600 hover:bg-blue-700';
-  const getShadow = () => darkMode ? 'shadow-lg shadow-gray-900/30' : 'shadow-md';
-  const getPageBg = () => darkMode ? 'bg-gray-900' : 'bg-gray-50';
-  
   return (
-    <div className={`min-h-screen py-10 px-4 ${getPageBg()} transition-colors duration-300`}>
-      <div className={`max-w-md mx-auto p-6 ${getCardBg()} rounded-lg ${getShadow()} transition-colors duration-300`}>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className={`text-2xl font-bold ${getTextColor()}`}>Payment Verification</h2>
-          <button 
-            onClick={toggleDarkMode}
-            className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-yellow-500 hover:bg-yellow-400 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'}`}
-          >
-            {darkMode ? 'Light' : 'Dark'}
-          </button>
-        </div>
-        
+    <div className="bg-[var(--color-surface-muted)] min-h-[calc(100vh-4rem)] grid place-items-center px-4 py-12">
+      <div className="card max-w-md w-full p-7 text-center animate-fadeInUp">
+        <p className="text-[11px] uppercase tracking-wider text-[var(--color-ink-subtle)]">Payment verification</p>
+
         {status === 'verifying' && (
-          <div className="flex flex-col items-center py-4">
-            <div className={`animate-spin h-10 w-10 border-4 ${darkMode ? 'border-blue-400' : 'border-blue-500'} rounded-full border-t-transparent mb-4`}></div>
-            <p className={getTextColor()}>{message}</p>
+          <div className="mt-6 flex flex-col items-center">
+            <Loader2 size={36} className="animate-spin text-[var(--color-brand-blue)]" />
+            <p className="mt-4 text-[var(--color-ink)]">{message}</p>
           </div>
         )}
-        
+
         {status === 'success' && (
-          <div className="text-center py-4">
-            <div className="text-green-500 text-5xl mb-4">✓</div>
-            <p className={`text-lg mb-2 ${getTextColor()}`}>{message}</p>
+          <div className="mt-6 flex flex-col items-center">
+            <span className="w-14 h-14 rounded-full bg-emerald-100 inline-flex items-center justify-center text-emerald-600">
+              <CheckCircle2 size={30} />
+            </span>
+            <h2 className="mt-4 text-xl font-bold text-[var(--color-brand-navy)]">Payment confirmed</h2>
+            <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{message}</p>
             {balance !== null && (
-              <p className={`font-semibold mb-4 ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
-                Your new wallet balance: GHS {balance.toFixed(2)}
-              </p>
+              <div className="mt-5 w-full rounded-xl bg-[var(--color-brand-blue-soft)] border border-[rgba(30,136,255,.18)] p-4 inline-flex items-center justify-between">
+                <span className="text-sm text-[var(--color-brand-blue-deep)] inline-flex items-center gap-2">
+                  <Wallet size={14} /> New balance
+                </span>
+                <span className="font-bold text-[var(--color-brand-navy)]">GHS {Number(balance).toFixed(2)}</span>
+              </div>
             )}
-            <button 
-              onClick={handleDashboardReturn}
-              className={`mt-4 px-6 py-2 ${getButtonBg()} text-white rounded transition-colors`}
-            >
-              Return to Dashboard
+            <button onClick={() => router.push('/')} className="btn-primary mt-6 w-full">
+              Back to dashboard <ArrowRight size={16} />
             </button>
           </div>
         )}
-        
+
         {status === 'error' && (
-          <div className="text-center py-4">
-            <div className={`${darkMode ? 'text-red-400' : 'text-red-600'} text-5xl mb-4`}>✕</div>
-            <p className={`text-lg mb-4 ${getTextColor()}`}>{message}</p>
-            <button 
-              onClick={handleDashboardReturn}
-              className={`mt-4 px-6 py-2 ${getButtonBg()} text-white rounded transition-colors`}
-            >
-              Return to Dashboard
-            </button>
+          <div className="mt-6 flex flex-col items-center">
+            <span className="w-14 h-14 rounded-full bg-red-100 inline-flex items-center justify-center text-red-600">
+              <XCircle size={30} />
+            </span>
+            <h2 className="mt-4 text-xl font-bold text-[var(--color-brand-navy)]">Couldn&rsquo;t verify</h2>
+            <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{message}</p>
+            <div className="mt-6 grid grid-cols-2 gap-3 w-full">
+              <button onClick={() => router.push('/deposite')} className="btn-ghost">Try again</button>
+              <button onClick={() => router.push('/')} className="btn-primary">Dashboard <ArrowRight size={16} /></button>
+            </div>
           </div>
         )}
-        
+
         {reference && (
-          <p className={`text-sm ${getSubTextColor()} mt-6`}>Reference: {reference}</p>
+          <p className="mt-6 text-[11px] text-[var(--color-ink-subtle)] break-all">
+            Ref: <span className="font-mono">{reference}</span>
+          </p>
         )}
       </div>
     </div>
   );
 }
 
-// Fallback component to show while loading
-function VerifyDepositFallback() {
-  // We'll use a similar check for dark mode to ensure consistent appearance
-  const isDarkMode = typeof window !== 'undefined' && 
-    (localStorage.getItem('theme') === 'dark' || 
-    (localStorage.getItem('theme') !== 'light' && 
-    window.matchMedia('(prefers-color-scheme: dark)').matches));
-
-  const getCardBg = () => isDarkMode ? 'bg-gray-800' : 'bg-white';
-  const getTextColor = () => isDarkMode ? 'text-white' : 'text-gray-900';
-  const getShadow = () => isDarkMode ? 'shadow-lg shadow-gray-900/30' : 'shadow-md';
-  const getPageBg = () => isDarkMode ? 'bg-gray-900' : 'bg-gray-50';
-  
+function Fallback() {
   return (
-    <div className={`min-h-screen py-10 px-4 ${getPageBg()}`}>
-      <div className={`max-w-md mx-auto p-6 ${getCardBg()} rounded-lg ${getShadow()}`}>
-        <h2 className={`text-2xl font-bold mb-4 ${getTextColor()}`}>Payment Verification</h2>
-        <div className="flex flex-col items-center py-4">
-          <div className={`animate-spin h-10 w-10 border-4 ${isDarkMode ? 'border-blue-400' : 'border-blue-500'} rounded-full border-t-transparent mb-4`}></div>
-          <p className={getTextColor()}>Loading payment verification...</p>
-        </div>
+    <div className="bg-[var(--color-surface-muted)] min-h-[calc(100vh-4rem)] grid place-items-center px-4 py-12">
+      <div className="card max-w-md w-full p-7 text-center">
+        <Loader2 size={32} className="mx-auto animate-spin text-[var(--color-brand-blue)]" />
+        <p className="mt-4 text-[var(--color-ink-muted)]">Loading payment verification…</p>
       </div>
     </div>
   );
 }
 
-// Main component that wraps the client component with Suspense
 export default function VerifyDeposit() {
   return (
-    <Suspense fallback={<VerifyDepositFallback />}>
-      <VerifyDepositClient />
+    <Suspense fallback={<Fallback />}>
+      <VerifyClient />
     </Suspense>
   );
 }

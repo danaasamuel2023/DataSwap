@@ -2,439 +2,301 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Menu, X, Home, CreditCard, List, User, LogOut, Users, Wallet, ShoppingBag, TrendingUp, ChevronRight, Globe, Zap, Shield, Star, Activity, ArrowUpRight, Sparkles, Coins, BarChart3, Layers, ArrowRight } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  Menu, X, Home, User, LogOut, Users, Wallet,
+  ShoppingBag, ChevronDown, ArrowRight, Receipt, Settings
+} from 'lucide-react';
+import Logo from './logo';
+
+const networkProviders = [
+  { id: 'mtn',     name: 'MTN',     dot: '#FFCB05' },
+  { id: 'at',      name: 'AT',      dot: '#ED1C24' },
+  { id: 'telecel', name: 'Telecel', dot: '#E60000' },
+  { id: 'afa',     name: 'AFA Reg.', dot: '#1E88FF' },
+];
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userRole, setUserRole] = useState('');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [showLogoutMessage, setShowLogoutMessage] = useState(false);
-  const [showNetworksDropdown, setShowNetworksDropdown] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [networksOpen, setNetworksOpen] = useState(false);
+  const [logoutToast, setLogoutToast] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
-    const storedUsername = localStorage.getItem('username');
-    const storedUserRole = localStorage.getItem('userrole');
-    
     if (userId) {
       setIsLoggedIn(true);
-      setUsername(storedUsername || 'User');
-      setUserRole(storedUserRole || '');
-      
-      // Fetch wallet balance if logged in
-      if (token) {
-        fetchWalletBalance(userId, token);
-      }
+      setUsername(localStorage.getItem('username') || 'User');
+      setUserRole(localStorage.getItem('userrole') || '');
+      if (token) fetchBalance(userId, token);
     }
-    
-    // Prevent body scroll when menu is open
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
-    // Close mobile menu when clicking outside
-    const handleClickOutside = (event) => {
-      if (isMobileMenuOpen && !event.target.closest('#mobile-menu') && !event.target.closest('#menu-button')) {
-        setIsMobileMenuOpen(false);
-      }
-      // Close dropdown when clicking outside
-      if (showNetworksDropdown && !event.target.closest('#networks-dropdown')) {
-        setShowNetworksDropdown(false);
-      }
-    };
-    
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isMobileMenuOpen, showNetworksDropdown]);
 
-  const fetchWalletBalance = async (userId, token) => {
-    try {
-      const response = await fetch(`https://dataswap-ydgo.onrender.com/api/wallet/balance?userId=${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setWalletBalance(data.balance);
+    document.body.style.overflow = mobileOpen ? 'hidden' : 'unset';
+    const onClick = (e) => {
+      if (mobileOpen && !e.target.closest('#mobile-menu') && !e.target.closest('#menu-button')) {
+        setMobileOpen(false);
       }
-    } catch (error) {
-      console.error("Error fetching wallet balance:", error);
-    }
+      if (networksOpen && !e.target.closest('#networks-dropdown')) {
+        setNetworksOpen(false);
+      }
+    };
+    document.addEventListener('click', onClick);
+    return () => {
+      document.removeEventListener('click', onClick);
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileOpen, networksOpen]);
+
+  const fetchBalance = async (userId, token) => {
+    try {
+      const r = await fetch(
+        `https://dataswap-ydgo.onrender.com/api/wallet/balance?userId=${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (r.ok) {
+        const data = await r.json();
+        setWalletBalance(data.balance || 0);
+      }
+    } catch (_) {}
   };
 
   const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem('userId');
-    localStorage.removeItem('username');
-    localStorage.removeItem('token');
-    localStorage.removeItem('userrole');
-    
-    // Update state
+    ['userId','username','token','userrole'].forEach(k => localStorage.removeItem(k));
     setIsLoggedIn(false);
-    setIsMobileMenuOpen(false);
-    
-    // Show logout success message
-    setShowLogoutMessage(true);
-    
-    // Redirect to login page after a short delay
-    setTimeout(() => {
-      setShowLogoutMessage(false);
-      router.push('/Auth');
-    }, 1500);
+    setMobileOpen(false);
+    setLogoutToast(true);
+    setTimeout(() => { setLogoutToast(false); router.push('/Auth'); }, 1200);
   };
 
   const isAdmin = userRole === 'adm';
-
-  // Network providers configuration
-  const networkProviders = [
-    {
-      id: 'mtn',
-      name: 'MTN',
-      icon: '📱',
-      color: 'bg-yellow-400',
-      borderColor: 'border-yellow-400'
-    },
-    {
-      id: 'at',
-      name: 'AT',
-      icon: '📡',
-      color: 'bg-red-500',
-      borderColor: 'border-red-500'
-    },
-    {
-      id: 'telecel',
-      name: 'Telecel',
-      icon: '📶',
-      color: 'bg-blue-500',
-      borderColor: 'border-blue-500'
-    },
-  ];
+  const linkActive = (href) =>
+    pathname === href
+      ? 'text-[var(--color-brand-blue-deep)] bg-[var(--color-brand-blue-soft)]'
+      : 'text-[var(--color-ink-soft)] hover:text-[var(--color-brand-navy)] hover:bg-[var(--color-surface-muted)]';
 
   return (
     <>
-      {/* Logout success message */}
-      {showLogoutMessage && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-black text-white px-6 py-4 rounded-2xl z-50 shadow-2xl border border-emerald-500">
-          <div className="flex items-center">
-            <div className="bg-emerald-500 rounded-full p-2 mr-3 animate-pulse">
-              <svg className="h-5 w-5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <p className="font-medium">Successfully logged out • Redirecting...</p>
-          </div>
+      {logoutToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] card px-5 py-3 flex items-center gap-3 animate-fadeInDown">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-soft" />
+          <span className="text-sm font-medium text-[var(--color-ink)]">Signed out — redirecting…</span>
         </div>
       )}
-    
-      <nav className="w-full bg-black shadow-2xl sticky top-0 z-40 border-b border-gray-800">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
-              {/* Logo */}
-              <div className="flex-shrink-0 flex items-center">
-                <Link href="/" className="flex items-center group">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 blur-lg opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative bg-black border border-gray-800 px-5 py-2.5 rounded-xl flex items-center space-x-2">
-                      <Activity className="text-emerald-400" size={24} />
-                      <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">dataSwap</h1>
-                    </div>
-                  </div>
+
+      <nav className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-[var(--color-line)]">
+        <div className="container mx-auto px-4">
+          <div className="h-16 flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <Logo size={32} />
+
+              <div className="hidden lg:flex items-center gap-1">
+                <Link href="/" className={`px-3 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors ${linkActive('/')}`}>
+                  <Home size={16} /> Home
                 </Link>
-              </div>
-              
-              {/* Desktop menu */}
-              <div className="hidden md:ml-12 md:flex md:items-center md:space-x-1">
-                <Link href="/" className="text-gray-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center hover:bg-gray-900 group">
-                  <Home size={16} className="mr-2 text-emerald-400 group-hover:scale-110 transition-transform" />
-                  Dashboard
-                </Link>
-                
-                {/* Networks Dropdown */}
+
                 <div className="relative" id="networks-dropdown">
                   <button
-                    onClick={() => setShowNetworksDropdown(!showNetworksDropdown)}
-                    className="text-gray-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center hover:bg-gray-900 group"
+                    onClick={() => setNetworksOpen(v => !v)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors ${linkActive('/__never__')}`}
                   >
-                    <ShoppingBag size={16} className="mr-2 text-cyan-400 group-hover:scale-110 transition-transform" />
-                    Buy Data
-                    <ChevronRight size={14} className={`ml-1.5 transition-transform ${showNetworksDropdown ? 'rotate-90' : ''}`} />
+                    <ShoppingBag size={16} /> Buy Data
+                    <ChevronDown size={14} className={`transition-transform ${networksOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  
-                  {/* Dropdown Menu */}
-                  {showNetworksDropdown && (
-                    <div className="absolute top-full left-0 mt-2 w-56 bg-black rounded-2xl shadow-2xl border border-gray-800 overflow-hidden">
-                      <div className="p-2">
-                        {networkProviders.map((provider) => (
-                          <Link
-                            key={provider.id}
-                            href={`/${provider.id}`}
-                            className="flex items-center px-4 py-3 mb-1 text-sm font-medium text-gray-300 hover:text-white rounded-xl hover:bg-gray-900 transition-all duration-200 group"
-                            onClick={() => setShowNetworksDropdown(false)}
-                          >
-                            <span className="text-2xl mr-3">{provider.icon}</span>
-                            <span>{provider.name}</span>
-                            <ArrowUpRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </Link>
-                        ))}
-                      </div>
+                  {networksOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-56 card p-2 animate-scaleIn">
+                      {networkProviders.map(p => (
+                        <Link
+                          key={p.id}
+                          href={`/${p.id}`}
+                          onClick={() => setNetworksOpen(false)}
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.dot }} />
+                          {p.name}
+                        </Link>
+                      ))}
                     </div>
                   )}
                 </div>
-                
-                <Link href="/deposite" className="text-gray-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center hover:bg-gray-900 group">
-                  <Coins size={16} className="mr-2 text-amber-400 group-hover:scale-110 transition-transform" />
-                  Top Up
+
+                <Link href="/deposite" className={`px-3 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors ${linkActive('/deposite')}`}>
+                  <Wallet size={16} /> Top up
                 </Link>
-                <Link href="/orders" className="text-gray-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center hover:bg-gray-900 group">
-                  <BarChart3 size={16} className="mr-2 text-violet-400 group-hover:scale-110 transition-transform" />
-                  Orders
+                <Link href="/orders" className={`px-3 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors ${linkActive('/orders')}`}>
+                  <Receipt size={16} /> Orders
                 </Link>
                 {isAdmin && (
-                  <Link href="/users" className="text-gray-300 hover:text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 flex items-center hover:bg-gray-900 group">
-                    <Users size={16} className="mr-2 text-rose-400 group-hover:scale-110 transition-transform" />
-                    Users
+                  <Link href="/admin" className={`px-3 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2 transition-colors ${linkActive('/admin')}`}>
+                    <Settings size={16} /> Admin
                   </Link>
                 )}
               </div>
             </div>
-            
-            {/* User menu */}
-            <div className="hidden md:flex items-center space-x-4">
+
+            <div className="hidden lg:flex items-center gap-3">
               {isLoggedIn ? (
                 <>
-                  {/* Wallet Balance */}
-                  <div className="bg-black border border-emerald-500 rounded-xl px-4 py-2">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500">
-                        <Wallet className="text-black" size={16} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs text-gray-400">Balance</span>
-                        <span className="text-white font-bold">GHS {walletBalance.toFixed(2)}</span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-brand-blue-soft)] border border-[rgba(30,136,255,.18)]">
+                    <Wallet size={14} className="text-[var(--color-brand-blue-deep)]" />
+                    <span className="text-xs text-[var(--color-ink-muted)]">Bal</span>
+                    <span className="text-sm font-bold text-[var(--color-brand-navy)]">
+                      GHS {Number(walletBalance).toFixed(2)}
+                    </span>
                   </div>
-                  
-                  {/* User Info */}
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full p-2">
-                      <User size={18} className="text-black" />
-                    </div>
-                    <div className="flex items-center">
-                      <span className="text-sm font-medium text-white">{username}</span>
-                      {isAdmin && (
-                        <span className="ml-2 px-2.5 py-0.5 text-xs font-bold bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full">ADMIN</span>
-                      )}
-                    </div>
+
+                  <div className="flex items-center gap-2 pl-2">
+                    <span className="w-8 h-8 rounded-full brand-blue-gradient text-white inline-flex items-center justify-center text-xs font-bold">
+                      {(username || 'U').slice(0, 1).toUpperCase()}
+                    </span>
+                    <span className="text-sm font-medium text-[var(--color-ink)]">{username}</span>
+                    {isAdmin && <span className="chip-orange chip">ADMIN</span>}
                   </div>
-                  
-                  {/* Logout Button */}
-                  <button
-                    onClick={handleLogout}
-                    className="bg-black hover:bg-red-900 border border-gray-800 hover:border-red-500 px-4 py-2 rounded-xl text-sm font-medium text-gray-300 hover:text-red-400 transition-all duration-200 flex items-center group"
-                  >
-                    <LogOut size={16} className="mr-2 group-hover:rotate-12 transition-transform" />
-                    Logout
+
+                  <button onClick={handleLogout} className="btn-ghost !py-2 !px-3 text-sm">
+                    <LogOut size={16} /> Sign out
                   </button>
                 </>
               ) : (
-                <div className="flex items-center space-x-3">
-                  <Link href="/Auth" className="text-gray-300 hover:text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 hover:bg-gray-900">
-                    Sign In
+                <>
+                  <Link href="/Auth" className="btn-ghost !py-2 !px-4 text-sm">Sign in</Link>
+                  <Link href="/Auth" className="btn-primary !py-2 !px-4 text-sm">
+                    Get started <ArrowRight size={16} />
                   </Link>
-                  <Link href="/Auth" className="relative group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 blur-lg opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-black px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex items-center">
-                      Get Started
-                      <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </Link>
-                </div>
+                </>
               )}
             </div>
-            
-            {/* Mobile menu button */}
-            <div className="flex items-center md:hidden">
+
+            <div className="flex items-center gap-2 lg:hidden">
               {isLoggedIn && (
-                <div className="mr-3 bg-black border border-emerald-500 rounded-lg px-2.5 py-1.5">
-                  <div className="flex items-center">
-                    <Wallet className="text-emerald-400 mr-1.5" size={14} />
-                    <span className="text-white font-bold text-sm">GHS {walletBalance.toFixed(2)}</span>
-                  </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[var(--color-brand-blue-soft)] border border-[rgba(30,136,255,.18)]">
+                  <Wallet size={13} className="text-[var(--color-brand-blue-deep)]" />
+                  <span className="text-xs font-bold text-[var(--color-brand-navy)]">
+                    GHS {Number(walletBalance).toFixed(2)}
+                  </span>
                 </div>
               )}
               <button
                 id="menu-button"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2.5 rounded-xl text-white bg-black border border-gray-800 hover:border-emerald-500 transition-all duration-200"
-                aria-expanded={isMobileMenuOpen}
+                onClick={() => setMobileOpen(v => !v)}
+                className="p-2 rounded-lg border border-[var(--color-line)] text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
+                aria-expanded={mobileOpen}
+                aria-label="Toggle menu"
               >
-                {isMobileMenuOpen ? (
-                  <X size={24} />
-                ) : (
-                  <Menu size={24} />
-                )}
+                {mobileOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
           </div>
         </div>
-        
-        {/* MOBILE MENU - SOLID BLACK MATCHING MAIN PAGE */}
-        <div 
+
+        {/* Mobile drawer */}
+        <div
           id="mobile-menu"
-          className={`fixed top-0 right-0 h-full w-80 bg-black shadow-2xl transform transition-transform duration-300 ease-in-out z-50 border-l border-emerald-500 ${
-            isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+          className={`fixed top-0 right-0 h-full w-[88%] max-w-sm bg-white border-l border-[var(--color-line)] shadow-2xl z-50 transform transition-transform duration-300 ${
+            mobileOpen ? 'translate-x-0' : 'translate-x-full'
           }`}
         >
-          {/* Mobile menu header - SOLID BLACK */}
-          <div className="p-5 bg-black border-b border-emerald-500">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <Activity className="text-emerald-400" size={24} />
-                <span className="text-xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">dataSwap</span>
-              </div>
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-xl text-white bg-black border border-gray-800 hover:border-red-500 hover:text-red-500 transition-all"
-              >
-                <X size={20} />
-              </button>
-            </div>
+          <div className="p-4 border-b border-[var(--color-line)] flex items-center justify-between">
+            <Logo size={28} />
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="p-2 rounded-lg border border-[var(--color-line)] text-[var(--color-ink)]"
+              aria-label="Close menu"
+            >
+              <X size={18} />
+            </button>
           </div>
-          
-          {/* User info - SOLID BLACK */}
+
           {isLoggedIn && (
-            <div className="p-5 bg-black border-b border-gray-800">
-              <div className="flex items-center space-x-3">
-                <div className="bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-full p-3">
-                  <User size={20} className="text-black" />
-                </div>
+            <div className="p-4 border-b border-[var(--color-line)]">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-full brand-blue-gradient text-white inline-flex items-center justify-center text-sm font-bold">
+                  {(username || 'U').slice(0, 1).toUpperCase()}
+                </span>
                 <div className="flex-1">
-                  <div className="flex items-center">
-                    <span className="text-white font-medium">{username}</span>
-                    {isAdmin && (
-                      <span className="ml-2 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-full">ADMIN</span>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-[var(--color-ink)]">{username}</span>
+                    {isAdmin && <span className="chip-orange chip">ADMIN</span>}
                   </div>
-                  <div className="mt-2 bg-black px-3 py-2 rounded-lg border border-emerald-500">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">Balance</span>
-                      <span className="text-emerald-400 font-bold">GHS {walletBalance.toFixed(2)}</span>
-                    </div>
+                  <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--color-brand-blue-soft)]">
+                    <Wallet size={14} className="text-[var(--color-brand-blue-deep)]" />
+                    <span className="text-xs text-[var(--color-ink-muted)]">Wallet</span>
+                    <span className="ml-auto text-sm font-bold text-[var(--color-brand-navy)]">
+                      GHS {Number(walletBalance).toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           )}
-          
-          {/* Mobile menu items - SOLID BLACK */}
-          <div className="px-3 py-5 space-y-1 bg-black">
-            <Link 
-              href="/" 
-              className="flex items-center text-white hover:bg-gray-900 border border-transparent hover:border-emerald-500 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 group"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Home size={18} className="mr-3 text-emerald-400 group-hover:scale-110 transition-transform" />
-              Dashboard
+
+          <div className="px-3 py-4 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+            <Link href="/" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/')}`}>
+              <Home size={18} /> Home
             </Link>
-            
-            {/* Networks Section */}
-            <div className="py-3">
-              <div className="px-4 py-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-                Buy Data Bundles
-              </div>
-              {networkProviders.map((provider) => (
+
+            <div className="pt-2">
+              <p className="px-3 pb-1 text-[11px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
+                Buy data
+              </p>
+              {networkProviders.map(p => (
                 <Link
-                  key={provider.id}
-                  href={`/${provider.id}`}
-                  className="flex items-center text-white hover:bg-gray-900 border border-transparent hover:border-emerald-500 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 group mb-1"
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  key={p.id}
+                  href={`/${p.id}`}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive(`/${p.id}`)}`}
                 >
-                  <span className="text-2xl mr-3">{provider.icon}</span>
-                  <span>{provider.name} Data</span>
-                  <ArrowUpRight size={14} className="ml-auto text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.dot }} />
+                  {p.name}
                 </Link>
               ))}
             </div>
-            
-            <Link 
-              href="/deposite" 
-              className="flex items-center text-white hover:bg-gray-900 border border-transparent hover:border-emerald-500 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 group"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Coins size={18} className="mr-3 text-amber-400 group-hover:scale-110 transition-transform" />
-              Top Up Wallet
+
+            <Link href="/deposite" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/deposite')}`}>
+              <Wallet size={18} /> Top up wallet
             </Link>
-            <Link 
-              href="/orders" 
-              className="flex items-center text-white hover:bg-gray-900 border border-transparent hover:border-emerald-500 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 group"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <BarChart3 size={18} className="mr-3 text-violet-400 group-hover:scale-110 transition-transform" />
-              My Orders
+            <Link href="/orders" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/orders')}`}>
+              <Receipt size={18} /> My orders
             </Link>
             {isAdmin && (
-              <Link 
-                href="/users" 
-                className="flex items-center text-white hover:bg-gray-900 border border-transparent hover:border-emerald-500 px-4 py-3.5 rounded-xl text-base font-medium transition-all duration-200 group"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Users size={18} className="mr-3 text-rose-400 group-hover:scale-110 transition-transform" />
-                Manage Users
-              </Link>
+              <>
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/admin')}`}>
+                  <Settings size={18} /> Admin dashboard
+                </Link>
+                <Link href="/users" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/users')}`}>
+                  <Users size={18} /> Manage users
+                </Link>
+              </>
             )}
           </div>
-          
-          {/* Mobile menu footer - SOLID BLACK */}
-          <div className="absolute bottom-0 w-full p-4 bg-black border-t border-emerald-500">
+
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[var(--color-line)] bg-white">
             {isLoggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-center w-full bg-black hover:bg-red-900 border border-red-500 px-4 py-3.5 rounded-xl text-base font-medium text-red-400 hover:text-white transition-all duration-200 group"
-              >
-                <LogOut size={18} className="mr-2 group-hover:rotate-12 transition-transform" />
-                Logout
+              <button onClick={handleLogout} className="btn-ghost w-full !text-[var(--color-danger)] hover:!border-[var(--color-danger)]">
+                <LogOut size={16} /> Sign out
               </button>
             ) : (
-              <div className="space-y-3">
-                <Link 
-                  href="/Auth" 
-                  className="block w-full text-center bg-black border border-gray-800 text-white px-4 py-3.5 rounded-xl font-medium hover:bg-gray-900 hover:border-emerald-500 transition-all duration-200"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Sign In
+              <div className="grid grid-cols-2 gap-2">
+                <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-ghost text-sm">
+                  Sign in
                 </Link>
-                <Link 
-                  href="/Auth" 
-                  className="block w-full text-center bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-black px-4 py-3.5 rounded-xl font-bold transition-all duration-300"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Get Started
+                <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-primary text-sm">
+                  Get started
                 </Link>
               </div>
             )}
           </div>
         </div>
-        
-        {/* Overlay - SOLID BLACK */}
-        {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black opacity-60 z-40 md:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
+
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 bg-[var(--color-brand-navy)]/40 backdrop-blur-[2px] z-40 lg:hidden"
+            onClick={() => setMobileOpen(false)}
           />
         )}
       </nav>

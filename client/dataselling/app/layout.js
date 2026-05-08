@@ -15,15 +15,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "DataSwap",
-  description: "Resell Data and make money",
+  title: "DataSwap — Buy MTN, Telecel & AT data instantly",
+  description:
+    "Top up your wallet once, then send MTN, Telecel, AT and AFA bundles to any number in seconds. Built for Ghana.",
+  icons: { icon: '/dataswap-logo.jpeg' },
   openGraph: {
+    title: "DataSwap",
+    description: "Buy MTN, Telecel & AT data bundles instantly.",
     images: [
       {
-        url: '/opengraph-image.jpg', 
+        url: '/dataswap-logo.jpeg',
         width: 1200,
         height: 630,
-        alt: 'sammm ',
+        alt: 'DataSwap',
       },
     ],
   },

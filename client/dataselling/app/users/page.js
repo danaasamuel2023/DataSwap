@@ -1,455 +1,247 @@
-// pages/admin/users/credit.js
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Head from 'next/head';
-import { 
-  Users, 
-  CreditCard, 
-  Search, 
-  ArrowLeft, 
-  PlusCircle,
-  UserCheck,
-  AlertCircle
-} from 'lucide-react';
 import axios from 'axios';
+import {
+  CreditCard, Search, ArrowLeft, PlusCircle, AlertCircle,
+  CheckCircle2, Loader2, Wallet, ChevronLeft, ChevronRight,
+} from 'lucide-react';
 
-export default function CreditUserPage() {
+export default function CreditUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selected, setSelected] = useState([]);
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCreditLoading, setIsCreditLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [crediting, setCrediting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
 
-  // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('userrole');
-    
-    if (!token || role !== 'admin') {
-      router.push('/Auth');
-    } else {
-      fetchUsers(1, searchQuery);
-    }
-  }, []);
+    if (!token || role !== 'admin') { router.push('/Auth'); return; }
+    fetchUsers(1, '');
+  }, []); // eslint-disable-line
 
-  // Fetch users
-  const fetchUsers = async (page, search = '') => {
-    setIsLoading(true);
+  async function fetchUsers(p, q = '') {
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `https://dataswap-ydgo.onrender.com/api/users?page=${page}&limit=10&search=${search}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+      const r = await axios.get(
+        `https://dataswap-ydgo.onrender.com/api/users?page=${p}&limit=10&search=${q}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      setUsers(response.data.users);
-      setTotalPages(response.data.pagination.pages);
-      setCurrentPage(page);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setErrorMessage('Failed to load users. Please try again.');
+      setUsers(r.data.users);
+      setPages(r.data.pagination.pages);
+      setPage(p);
+    } catch (err) {
+      setError('Failed to load users.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }
 
-  // Handle user selection
-  const toggleUserSelection = (userId) => {
-    if (selectedUsers.includes(userId)) {
-      setSelectedUsers(prev => prev.filter(id => id !== userId));
-    } else {
-      setSelectedUsers(prev => [...prev, userId]);
-    }
-  };
+  function toggle(id) {
+    setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  }
 
-  // Handle search
-  const handleSearch = (e) => {
-    e.preventDefault();
-    fetchUsers(1, searchQuery);
-  };
-
-  // Handle pagination
-  const changePage = (page) => {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-    fetchUsers(page, searchQuery);
-  };
-
-  // Single user credit function
-  const creditSingleUser = async (userId) => {
-    if (!amount || parseFloat(amount) <= 0) {
-      setErrorMessage('Please enter a valid amount');
-      return;
-    }
-
-    setIsCreditLoading(true);
-    setSuccessMessage('');
-    setErrorMessage('');
-
+  async function creditOne(id) {
+    if (!amount || parseFloat(amount) <= 0) return setError('Enter a valid amount.');
+    setCrediting(true); setSuccess(''); setError('');
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `https://dataswap-ydgo.onrender.com/api/users/${userId}/deposit`,
-        {
-          amount: parseFloat(amount),
-          description: description || `Credit by admin`
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        `https://dataswap-ydgo.onrender.com/api/users/${id}/deposit`,
+        { amount: parseFloat(amount), description: description || 'Credit by admin' },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      setSuccessMessage('User credited successfully');
-      // Reset form
-      setAmount('');
-      setDescription('');
-    } catch (error) {
-      console.error('Error crediting user:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to credit user. Please try again.');
-    } finally {
-      setIsCreditLoading(false);
-    }
-  };
+      setSuccess('User credited successfully.');
+      setAmount(''); setDescription('');
+      fetchUsers(page, search);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to credit user.');
+    } finally { setCrediting(false); }
+  }
 
-  // Bulk credit function
-  const creditMultipleUsers = async () => {
-    if (selectedUsers.length === 0) {
-      setErrorMessage('Please select at least one user');
-      return;
-    }
-
-    if (!amount || parseFloat(amount) <= 0) {
-      setErrorMessage('Please enter a valid amount');
-      return;
-    }
-
-    setIsCreditLoading(true);
-    setSuccessMessage('');
-    setErrorMessage('');
-
+  async function creditMany() {
+    if (!selected.length) return setError('Select at least one user.');
+    if (!amount || parseFloat(amount) <= 0) return setError('Enter a valid amount.');
+    setCrediting(true); setSuccess(''); setError('');
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post(
+      const res = await axios.post(
         `/api/admin/bulk-credit`,
-        {
-          userIds: selectedUsers,
-          amount: parseFloat(amount),
-          description: description || `Bulk credit by admin`
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { userIds: selected, amount: parseFloat(amount), description: description || 'Bulk credit by admin' },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      setSuccessMessage(`Successfully credited ${response.data.summary.successful} users`);
-      
-      // Reset form and selection
-      setSelectedUsers([]);
-      setAmount('');
-      setDescription('');
-      
-      // Refresh user list
-      fetchUsers(currentPage, searchQuery);
-    } catch (error) {
-      console.error('Error bulk crediting users:', error);
-      setErrorMessage(error.response?.data?.message || 'Failed to credit users. Please try again.');
-    } finally {
-      setIsCreditLoading(false);
-    }
-  };
+      setSuccess(`Credited ${res.data.summary.successful} user(s).`);
+      setSelected([]); setAmount(''); setDescription('');
+      fetchUsers(page, search);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to bulk credit.');
+    } finally { setCrediting(false); }
+  }
 
   return (
-    <>
-      <Head>
-        <title>Credit User Wallets | Admin Dashboard</title>
-      </Head>
-
-      <div className="container mx-auto px-4 py-8 dark:bg-gray-900 min-h-screen">
-        {/* Improved Header with larger text */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <button 
-              onClick={() => router.back()} 
-              className="mr-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-gray-900 dark:text-white"
-            >
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-            <h1 className="text-2xl md:text-3xl font-bold flex items-center text-gray-900 dark:text-white">
-              <CreditCard className="mr-2 md:mr-3 h-6 w-6 md:h-8 md:w-8" />
-              <span className="flex-shrink-0">Credit User Wallets</span>
+    <div className="bg-[var(--color-surface-muted)] min-h-[calc(100vh-4rem)] py-10">
+      <div className="container mx-auto px-4 max-w-7xl">
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => router.back()} className="p-2 rounded-lg border border-[var(--color-line)] hover:bg-white">
+            <ArrowLeft size={18} className="text-[var(--color-ink)]" />
+          </button>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-[var(--color-ink-subtle)]">Admin</p>
+            <h1 className="text-2xl md:text-3xl font-black text-[var(--color-brand-navy)] inline-flex items-center gap-2">
+              <CreditCard size={26} className="text-[var(--color-brand-blue-deep)]" /> Credit user wallets
             </h1>
           </div>
         </div>
 
-        {/* Improved Success Message with dark mode support */}
-        {successMessage && (
-          <div className="bg-green-100 dark:bg-green-900 border-l-4 border-green-600 p-4 md:p-5 mb-6 rounded">
-            <div className="flex items-center">
-              <UserCheck className="h-5 w-5 md:h-6 md:w-6 text-green-600 dark:text-green-400 mr-3 flex-shrink-0" />
-              <p className="text-green-800 dark:text-green-300 font-medium text-base md:text-lg">{successMessage}</p>
-            </div>
+        {success && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700 mb-4 inline-flex items-center gap-2">
+            <CheckCircle2 size={16} /> {success}
+          </div>
+        )}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 mb-4 inline-flex items-center gap-2">
+            <AlertCircle size={16} /> {error}
           </div>
         )}
 
-        {/* Improved Error Message with dark mode support */}
-        {errorMessage && (
-          <div className="bg-red-100 dark:bg-red-900 border-l-4 border-red-600 p-4 md:p-5 mb-6 rounded">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 md:h-6 md:w-6 text-red-600 dark:text-red-400 mr-3 flex-shrink-0" />
-              <p className="text-red-800 dark:text-red-300 font-medium text-base md:text-lg">{errorMessage}</p>
-            </div>
-          </div>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Credit form */}
+          <div className="card p-5">
+            <h2 className="font-bold text-[var(--color-ink)]">Credit details</h2>
+            <p className="text-sm text-[var(--color-ink-muted)] mt-1">Applies to selected users below.</p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-          {/* Credit Form with dark mode support */}
-          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md lg:col-span-1 border border-gray-300 dark:border-gray-700">
-            <h2 className="text-xl font-semibold mb-4 md:mb-5 text-gray-900 dark:text-white">Credit Information</h2>
-            
-            <div className="mb-4 md:mb-5">
-              <label className="block text-base font-medium text-gray-800 dark:text-gray-200 mb-2">
-                Amount (GHS)
-              </label>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
-                min="0"
-                step="0.01"
-                className="w-full p-3 border border-gray-400 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
+            <div className="mt-5">
+              <label className="label">Amount (GHS)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-[var(--color-brand-blue-deep)]">GHS</span>
+                <input type="number" min="0" step="0.01" placeholder="0.00"
+                       value={amount} onChange={(e) => setAmount(e.target.value)} className="input pl-14" />
+              </div>
             </div>
-            
-            <div className="mb-5 md:mb-6">
-              <label className="block text-base font-medium text-gray-800 dark:text-gray-200 mb-2">
-                Description (Optional)
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter description"
-                rows="3"
-                className="w-full p-3 border border-gray-400 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              />
+
+            <div className="mt-4">
+              <label className="label">Description (optional)</label>
+              <textarea rows="3" value={description} onChange={(e) => setDescription(e.target.value)}
+                        placeholder="e.g. Refund for failed order" className="input resize-none" />
             </div>
-            
-            <div>
-              <button
-                onClick={creditMultipleUsers}
-                disabled={isCreditLoading || selectedUsers.length === 0}
-                className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-600 dark:hover:bg-blue-700 ${
-                  (isCreditLoading || selectedUsers.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {isCreditLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing...
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Credit Selected Users ({selectedUsers.length})
-                  </span>
-                )}
-              </button>
-            </div>
+
+            <button
+              onClick={creditMany}
+              disabled={crediting || !selected.length}
+              className="btn-primary w-full mt-5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {crediting ? <><Loader2 size={16} className="animate-spin" /> Working…</>
+                         : <><PlusCircle size={16} /> Credit selected ({selected.length})</>}
+            </button>
           </div>
-          
-          {/* User Selection with dark mode support */}
-          <div className="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg shadow-md lg:col-span-2 border border-gray-300 dark:border-gray-700">
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-4 md:mb-5 space-y-3 md:space-y-0">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Select Users</h2>
-              
-              <form onSubmit={handleSearch} className="flex w-full md:w-auto">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search users..."
-                  className="w-full md:w-auto p-2 border border-gray-400 dark:border-gray-600 rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-                <button
-                  type="submit"
-                  className="bg-gray-200 dark:bg-gray-600 p-2 border border-l-0 border-gray-400 dark:border-gray-600 rounded-r-md hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <Search className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-                </button>
+
+          {/* Users table */}
+          <div className="card p-5 lg:col-span-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+              <h2 className="font-bold text-[var(--color-ink)]">Users</h2>
+              <form onSubmit={(e) => { e.preventDefault(); fetchUsers(1, search); }}
+                    className="flex w-full md:w-auto">
+                <div className="relative flex-1 md:w-72">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ink-subtle)]" />
+                  <input value={search} onChange={(e) => setSearch(e.target.value)}
+                         placeholder="Search users…" className="input pl-9" />
+                </div>
               </form>
             </div>
-            
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <svg className="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+
+            {loading ? (
+              <div className="py-16 text-center">
+                <Loader2 size={28} className="mx-auto animate-spin text-[var(--color-brand-blue)]" />
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto shadow-md border border-gray-300 dark:border-gray-700 sm:rounded-lg">
-                  <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
-                    <thead className="bg-gray-100 dark:bg-gray-700">
-                      <tr>
-                        <th className="w-12 px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                <div className="overflow-x-auto rounded-xl border border-[var(--color-line)]">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="bg-[var(--color-surface-muted)] text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">
+                        <th className="px-3 py-3 text-left">
                           <input
                             type="checkbox"
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedUsers(users.map(user => user._id));
-                              } else {
-                                setSelectedUsers([]);
-                              }
-                            }}
-                            checked={users.length > 0 && selectedUsers.length === users.length}
-                            className="h-4 w-4 md:h-5 md:w-5 text-blue-600 border-gray-400 dark:border-gray-600 rounded focus:ring-blue-500"
+                            checked={users.length > 0 && selected.length === users.length}
+                            onChange={(e) => setSelected(e.target.checked ? users.map(u => u._id) : [])}
+                            className="h-4 w-4 accent-[var(--color-brand-blue)]"
                           />
                         </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Name
-                        </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Email
-                        </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Balance
-                        </th>
-                        <th className="px-2 md:px-4 py-3 text-left text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                          Action
-                        </th>
+                        <th className="px-3 py-3 text-left font-semibold">Name</th>
+                        <th className="px-3 py-3 text-left font-semibold">Email</th>
+                        <th className="px-3 py-3 text-left font-semibold">Balance</th>
+                        <th className="px-3 py-3 text-left font-semibold">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-300 dark:divide-gray-700">
-                      {users.length > 0 ? (
-                        users.map((user) => (
-                          <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <input
-                                type="checkbox"
-                                onChange={() => toggleUserSelection(user._id)}
-                                checked={selectedUsers.includes(user._id)}
-                                className="h-4 w-4 md:h-5 md:w-5 text-blue-600 border-gray-400 dark:border-gray-600 rounded focus:ring-blue-500"
-                              />
-                            </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <div className="text-sm md:text-base font-medium text-gray-900 dark:text-white">{user.name}</div>
-                            </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <div className="text-sm md:text-base text-gray-700 dark:text-gray-300">{user.email}</div>
-                            </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap">
-                              <div className="text-sm md:text-base font-medium text-gray-900 dark:text-white">GHS {user.walletBalance.toFixed(2)}</div>
-                            </td>
-                            <td className="px-2 md:px-4 py-3 md:py-4 whitespace-nowrap text-sm md:text-base">
-                              <button
-                                onClick={() => creditSingleUser(user._id)}
-                                disabled={isCreditLoading || !amount}
-                                className={`inline-flex items-center px-2 md:px-4 py-1 md:py-2 border border-transparent rounded-md shadow-sm text-sm md:text-base font-medium text-white bg-green-700 hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
-                                  (isCreditLoading || !amount) ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                              >
-                                <PlusCircle className="mr-1 md:mr-2 h-4 w-4 md:h-5 md:w-5" />
-                                Credit
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="5" className="px-4 md:px-6 py-4 text-center text-sm md:text-base text-gray-700 dark:text-gray-300 font-medium">
-                            No users found
+                    <tbody className="divide-y divide-[var(--color-line)]">
+                      {users.length ? users.map(u => (
+                        <tr key={u._id} className="hover:bg-[var(--color-surface-muted)]/60">
+                          <td className="px-3 py-3">
+                            <input type="checkbox" checked={selected.includes(u._id)} onChange={() => toggle(u._id)}
+                                   className="h-4 w-4 accent-[var(--color-brand-blue)]" />
+                          </td>
+                          <td className="px-3 py-3 font-medium text-[var(--color-ink)]">{u.name}</td>
+                          <td className="px-3 py-3 text-[var(--color-ink-muted)]">{u.email}</td>
+                          <td className="px-3 py-3">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[var(--color-brand-navy)]">
+                              <Wallet size={14} className="text-[var(--color-brand-blue-deep)]" />
+                              GHS {Number(u.walletBalance || 0).toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3">
+                            <button onClick={() => creditOne(u._id)} disabled={crediting || !amount}
+                                    className="btn-accent !py-1.5 !px-3 text-xs disabled:opacity-50">
+                              <PlusCircle size={12} /> Credit
+                            </button>
                           </td>
                         </tr>
+                      )) : (
+                        <tr><td colSpan="5" className="px-3 py-8 text-center text-[var(--color-ink-muted)]">No users found.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
 
-                {/* Improved Pagination with dark mode support */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center mt-4 md:mt-6 overflow-x-auto">
-                    <nav className="inline-flex rounded-md shadow-md">
-                      <button
-                        onClick={() => changePage(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`relative inline-flex items-center px-2 md:px-4 py-1 md:py-2 rounded-l-md border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm md:text-base font-medium ${
-                          currentPage === 1 
-                            ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        Previous
-                      </button>
-                      
-                      {[...Array(totalPages)].map((_, index) => {
-                        // Show limited page numbers on mobile
-                        const pageNum = index + 1;
-                        const showPage = 
-                          pageNum === 1 || 
-                          pageNum === totalPages || 
-                          Math.abs(pageNum - currentPage) <= 1;
-                        
-                        if (!showPage && (
-                          (pageNum === 2 && currentPage > 3) || 
-                          (pageNum === totalPages - 1 && currentPage < totalPages - 2)
-                        )) {
-                          return (
-                            <span 
-                              key={`ellipsis-${index}`}
-                              className="relative inline-flex items-center px-3 md:px-4 py-1 md:py-2 border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm md:text-base"
-                            >
-                              ...
-                            </span>
-                          );
+                {pages > 1 && (
+                  <div className="mt-5 flex items-center justify-center gap-1">
+                    <button onClick={() => fetchUsers(Math.max(1, page - 1), search)} disabled={page === 1}
+                            className="btn-ghost text-sm !py-1.5 !px-3 disabled:opacity-50">
+                      <ChevronLeft size={14} /> Prev
+                    </button>
+                    {[...Array(pages)].map((_, i) => {
+                      const n = i + 1;
+                      const show = n === 1 || n === pages || Math.abs(n - page) <= 1;
+                      if (!show) {
+                        if ((n === 2 && page > 3) || (n === pages - 1 && page < pages - 2)) {
+                          return <span key={`e${i}`} className="px-2 text-[var(--color-ink-subtle)]">…</span>;
                         }
-                        
-                        return showPage ? (
-                          <button
-                            key={pageNum}
-                            onClick={() => changePage(pageNum)}
-                            className={`relative inline-flex items-center px-3 md:px-5 py-1 md:py-2 border border-gray-400 dark:border-gray-600 text-sm md:text-base font-medium ${
-                              currentPage === pageNum
-                                ? 'text-white bg-blue-600 dark:bg-blue-700'
-                                : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        ) : null;
-                      })}
-                      
-                      <button
-                        onClick={() => changePage(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`relative inline-flex items-center px-2 md:px-4 py-1 md:py-2 rounded-r-md border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm md:text-base font-medium ${
-                          currentPage === totalPages 
-                            ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' 
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        Next
-                      </button>
-                    </nav>
+                        return null;
+                      }
+                      return (
+                        <button key={n} onClick={() => fetchUsers(n, search)}
+                                className={`min-w-[34px] px-2 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                                  n === page
+                                    ? 'bg-[var(--color-brand-blue)] text-white'
+                                    : 'bg-white border border-[var(--color-line)] text-[var(--color-ink-muted)] hover:border-[var(--color-line-strong)]'
+                                }`}>
+                          {n}
+                        </button>
+                      );
+                    })}
+                    <button onClick={() => fetchUsers(Math.min(pages, page + 1), search)} disabled={page === pages}
+                            className="btn-ghost text-sm !py-1.5 !px-3 disabled:opacity-50">
+                      Next <ChevronRight size={14} />
+                    </button>
                   </div>
                 )}
               </>
@@ -457,6 +249,6 @@ export default function CreditUserPage() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

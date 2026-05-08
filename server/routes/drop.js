@@ -5,9 +5,9 @@ dotenv.config();
 
 async function dropPhoneNumberIndex() {
   try {
-    // Connect to MongoDB
-    const password = '0246783840Sa';
-    await mongoose.connect(process.env.MONGO_URI ||  `mongodb+srv://dajounimarket:${password}@cluster0.kp8c2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`);
+    const uri = process.env.MONGO_URI_LEGACY || process.env.MONGO_URI;
+    if (!uri) throw new Error('MONGO_URI_LEGACY (or MONGO_URI) must be set');
+    await mongoose.connect(uri);
     console.log('Connected to MongoDB');
     
     // Get the collection

@@ -9,7 +9,7 @@ const router = express.Router();
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 if (!PAYSTACK_SECRET_KEY) {
-  throw new Error("Paystack secret key is missing in environment variables");
+  throw new Error('PAYSTACK_SECRET_KEY is not set in environment');
 }
 
 // ✅ Step 1: Initialize Paystack Payment with metadata

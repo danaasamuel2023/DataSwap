@@ -13,8 +13,11 @@ dotenv.config();
 const router = express.Router();
 
 // DataMart API Configuration
-const DATAMART_BASE_URL = 'https://api.datamartgh.shop';
-const DATAMART_API_KEY = process.env.DATAMART_API_KEY || '76af8af96a7c172ba6a4193ebd97f2ee02a7719b08d907358a05fba5e71b11a8';
+const DATAMART_BASE_URL = process.env.DATAMART_BASE_URL || 'https://api.datamartgh.shop';
+const DATAMART_API_KEY = process.env.DATAMART_API_KEY;
+if (!DATAMART_API_KEY) {
+  throw new Error('DATAMART_API_KEY is not set in environment');
+}
 
 // Create DataMart client
 const datamartClient = axios.create({

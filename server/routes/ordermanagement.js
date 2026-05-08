@@ -1,7 +1,41 @@
 const express = require('express');
+const axios = require('axios');
+const dotenv = require('dotenv');
 const router = express.Router();
 const { DataOrder, User, Transaction, NetworkAvailability } = require('../schema/schema');
 const { auth, authorize } = require('../middleware/page');
+
+dotenv.config();
+
+// DataMart API Configuration (for retry)
+const DATAMART_BASE_URL = process.env.DATAMART_BASE_URL || 'https://api.datamartgh.shop';
+const DATAMART_API_KEY = process.env.DATAMART_API_KEY;
+if (!DATAMART_API_KEY) {
+  throw new Error('DATAMART_API_KEY is not set in environment');
+}
+
+const datamartRetryClient = axios.create({
+  baseURL: DATAMART_BASE_URL,
+  headers: {
+    'x-api-key': DATAMART_API_KEY,
+    'Content-Type': 'application/json'
+  }
+});
+
+const mapNetworkToDatamart = (networkType) => {
+  const network = networkType.toUpperCase();
+  const networkMap = {
+    'TELECEL': 'TELECEL',
+    'MTN': 'YELLO',
+    'YELLO': 'YELLO',
+    'AIRTEL': 'at',
+    'AT': 'at',
+    'AIRTELTIGO': 'at',
+    'TIGO': 'at',
+    'AT_PREMIUM': 'AT_PREMIUM',
+  };
+  return networkMap[network] || network.toLowerCase();
+};
 
 // Error logging helper
 const errorLogger = (error, route) => {
@@ -13,13 +47,27 @@ const errorLogger = (error, route) => {
 
 // ====== ORDER MANAGEMENT ROUTES ======
 
-// Get all orders (admin and agent)
+// Get all orders (admin and agent) with search
 router.get('/orders', auth, authorize('admin'), async (req, res) => {
   try {
-    const orders = await DataOrder.find()
+    const { search = '' } = req.query;
+
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { phoneNumber: { $regex: search, $options: 'i' } },
+          { reference: { $regex: search, $options: 'i' } },
+          { network: { $regex: search, $options: 'i' } },
+          { status: { $regex: search, $options: 'i' } }
+        ]
+      };
+    }
+
+    const orders = await DataOrder.find(query)
       .sort({ createdAt: -1 })
       .populate('userId', 'name email');
-    
+
     res.json(orders);
   } catch (error) {
     errorLogger(error, 'Get All Orders');
@@ -88,6 +136,107 @@ router.put('/orders/:id', auth, authorize('admin', 'agent'), async (req, res) =>
     res.json({ message: 'Order updated successfully', order });
   } catch (error) {
     errorLogger(error, 'Update Order');
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Retry all failed orders - ADMIN ONLY
+router.post('/orders/retry-all-failed', auth, authorize('admin'), async (req, res) => {
+  try {
+    // Find all failed data orders (not afa-registration)
+    const failedOrders = await DataOrder.find({
+      status: 'failed',
+      network: { $ne: 'afa-registration' }
+    }).populate('userId');
+
+    if (failedOrders.length === 0) {
+      return res.json({ message: 'No failed orders to retry', results: { success: 0, failed: 0, skipped: 0 } });
+    }
+
+    const results = { success: 0, failed: 0, skipped: 0, details: [] };
+
+    for (const order of failedOrders) {
+      try {
+        const user = await User.findById(order.userId);
+        if (!user) {
+          results.skipped++;
+          results.details.push({ orderId: order._id, reason: 'User not found' });
+          continue;
+        }
+
+        // Check if user has enough balance
+        if (user.walletBalance < order.price) {
+          results.skipped++;
+          results.details.push({ orderId: order._id, reason: 'Insufficient balance' });
+          continue;
+        }
+
+        // Deduct from wallet
+        user.walletBalance -= order.price;
+        await user.save();
+
+        // Update order to processing
+        order.status = 'processing';
+        await order.save();
+
+        const datamartNetwork = mapNetworkToDatamart(order.network);
+        const payload = {
+          phoneNumber: order.phoneNumber,
+          network: datamartNetwork,
+          capacity: order.dataAmount.toString(),
+          gateway: 'wallet',
+          ref: order.reference + '-retry'
+        };
+
+        const response = await datamartRetryClient.post('/api/developer/purchase', payload);
+
+        if (response.data && response.data.status === 'success') {
+          order.status = 'completed';
+          order.completedAt = new Date();
+          order.apiResponse = response.data;
+          order.failureReason = null;
+          await order.save();
+
+          // Create transaction record
+          const transaction = new Transaction({
+            userId: order.userId,
+            type: 'purchase',
+            amount: order.price,
+            description: `${order.dataAmount}GB ${order.network} Data Bundle (retry)`,
+            reference: order.reference + '-retry',
+            status: 'completed',
+            balanceAfter: user.walletBalance
+          });
+          await transaction.save();
+
+          results.success++;
+          results.details.push({ orderId: order._id, status: 'completed' });
+        } else {
+          throw new Error(response.data?.message || 'DataMart API failed');
+        }
+      } catch (err) {
+        // Refund user on failure
+        const user = await User.findById(order.userId);
+        if (user) {
+          user.walletBalance += order.price;
+          await user.save();
+        }
+
+        order.status = 'failed';
+        order.failureReason = err.response?.data?.message || err.message;
+        await order.save();
+
+        results.failed++;
+        results.details.push({ orderId: order._id, status: 'failed', reason: err.message });
+      }
+    }
+
+    res.json({
+      message: `Retry complete: ${results.success} succeeded, ${results.failed} failed, ${results.skipped} skipped`,
+      results
+    });
+  } catch (error) {
+    errorLogger(error, 'Retry All Failed Orders');
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

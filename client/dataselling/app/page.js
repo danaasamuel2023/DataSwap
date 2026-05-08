@@ -1,439 +1,359 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import { Zap,Wallet , Shield, Clock, TrendingUp, ChevronRight, Star, Users, Globe, Activity, Sparkles, Layers, ArrowRight, ArrowUpRight, Coins, BarChart3, Cpu, Signal, Wifi, Database, Circle, Hexagon, Triangle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import {
+  ArrowRight, Wallet, ShieldCheck, Zap, Clock,
+  Smartphone, BarChart3, CheckCircle2, Star, ChevronRight
+} from 'lucide-react';
 
-// Network Provider Card Component with cyberpunk design
-const NetworkProviderCard = ({ provider }) => {
-  const router = useRouter();
-  const [isHovered, setIsHovered] = useState(false);
-  
-  // Provider configurations with actual brand identity
-  const providerDetails = {
-    mtn: {
-      gradient: "from-yellow-400 via-amber-400 to-yellow-500",
-      borderGradient: "from-yellow-400 to-amber-500",
-      brandColor: "#FFCB05",
-      logo: (
-        <div className="flex items-center justify-center p-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-yellow-400 rounded-full"></div>
-            <span className="text-4xl font-black text-yellow-400">MTN</span>
-          </div>
-        </div>
-      ),
-      pattern: "dots",
-      animationDelay: "0ms"
-    },
-    at: {
-      gradient: "from-red-500 via-red-600 to-rose-600",
-      borderGradient: "from-red-400 to-red-600",
-      brandColor: "#ED1C24",
-      logo: (
-        <div className="flex items-center justify-center p-3">
-          <span className="text-3xl font-bold">
-            <span className="text-red-500">Airtel</span>
-            <span className="text-blue-600">Tigo</span>
-          </span>
-        </div>
-      ),
-      pattern: "waves",
-      animationDelay: "100ms"
-    },
-    telecel: {
-      gradient: "from-blue-500 via-blue-600 to-cyan-500",
-      borderGradient: "from-blue-400 to-cyan-500",
-      brandColor: "#0066CC",
-      logo: (
-        <div className="flex items-center justify-center p-3">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-              <div className="w-7 h-7 bg-white rounded-full"></div>
-            </div>
-            <span className="text-3xl font-bold text-blue-600">Telecel</span>
-          </div>
-        </div>
-      ),
-      pattern: "grid",
-      animationDelay: "200ms"
-    }
-  };
-  
-  const details = providerDetails[provider];
-  
-  const handleClick = () => {
-    router.push(`/${provider}`);
-  };
-  
+const networks = [
+  {
+    id: 'mtn',
+    name: 'MTN',
+    tagline: 'Best coverage nationwide',
+    accent: '#FFCB05',
+    accentText: '#7A5800',
+    accentSoft: '#FFF7D6',
+    sample: '1GB from GHS 5',
+  },
+  {
+    id: 'telecel',
+    name: 'Telecel',
+    tagline: 'Fast 4G+ in major cities',
+    accent: '#E60000',
+    accentText: '#7A0000',
+    accentSoft: '#FFE5E5',
+    sample: '1GB from GHS 5',
+  },
+  {
+    id: 'at',
+    name: 'AT',
+    tagline: 'Affordable everyday bundles',
+    accent: '#1E88FF',
+    accentText: '#0B3D91',
+    accentSoft: '#E8F1FF',
+    sample: '1GB from GHS 4',
+  },
+];
+
+function NetworkCard({ n }) {
   return (
-    <div
-      onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="relative group cursor-pointer"
-      style={{ animationDelay: details.animationDelay }}
+    <Link
+      href={`/${n.id}`}
+      className="card group p-6 transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(10,22,40,.18)]"
     >
-      {/* Glow effect */}
-      <div className={`absolute inset-0 bg-gradient-to-r ${details.gradient} opacity-0 group-hover:opacity-30 blur-2xl transition-all duration-500`}></div>
-      
-      {/* Main card */}
-      <div className="relative bg-black/90 backdrop-blur-xl border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-500 transform hover:scale-[1.02] hover:-translate-y-1">
-        {/* Animated gradient border */}
-        <div className={`absolute inset-0 bg-gradient-to-r ${details.borderGradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}>
-          <div className="absolute inset-[1px] bg-black rounded-2xl"></div>
-        </div>
-        
-        {/* Pattern overlay */}
-        <div className="absolute inset-0 opacity-5">
-          {details.pattern === 'dots' && (
-            <div className="w-full h-full" style={{
-              backgroundImage: `radial-gradient(circle, ${details.brandColor}40 1px, transparent 1px)`,
-              backgroundSize: '20px 20px'
-            }}></div>
-          )}
-          {details.pattern === 'waves' && (
-            <div className="w-full h-full" style={{
-              backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, ${details.brandColor}20 10px, ${details.brandColor}20 20px)`
-            }}></div>
-          )}
-          {details.pattern === 'grid' && (
-            <div className="w-full h-full" style={{
-              backgroundImage: `
-                linear-gradient(${details.brandColor}10 1px, transparent 1px),
-                linear-gradient(90deg, ${details.brandColor}10 1px, transparent 1px)
-              `,
-              backgroundSize: '30px 30px'
-            }}></div>
-          )}
-        </div>
-        
-        <div className="relative p-8 z-10 flex flex-col items-center justify-center min-h-[280px]">
-          {/* Brand Logo */}
-          <div className="mb-8">
-            {details.logo}
-          </div>
-          
-          {/* CTA */}
-          <div className={`flex items-center justify-center py-3 px-8 bg-gradient-to-r ${details.gradient} rounded-xl group-hover:shadow-lg transition-all duration-300`}>
-            <span className="text-black font-bold">Get Started</span>
-            <ArrowRight className="ml-2 text-black group-hover:translate-x-2 transition-transform duration-300" size={16} />
-          </div>
-        </div>
-        
-        {/* Animated particles */}
-        {isHovered && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className={`absolute top-1/4 left-1/4 w-1 h-1 bg-gradient-to-r ${details.gradient} rounded-full animate-float-particle`}></div>
-            <div className={`absolute top-3/4 right-1/4 w-1 h-1 bg-gradient-to-r ${details.gradient} rounded-full animate-float-particle animation-delay-200`}></div>
-            <div className={`absolute bottom-1/4 left-3/4 w-1 h-1 bg-gradient-to-r ${details.gradient} rounded-full animate-float-particle animation-delay-400`}></div>
-          </div>
-        )}
+      <div className="flex items-start justify-between">
+        <span
+          className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-base font-black"
+          style={{ background: n.accentSoft, color: n.accentText }}
+        >
+          {n.name.slice(0, 2)}
+        </span>
+        <span
+          className="text-xs font-semibold px-2.5 py-1 rounded-full"
+          style={{ background: n.accentSoft, color: n.accentText }}
+        >
+          {n.sample}
+        </span>
       </div>
-    </div>
+      <h3 className="mt-5 text-lg font-bold text-[var(--color-ink)]">{n.name} bundles</h3>
+      <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{n.tagline}</p>
+      <div className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand-blue-deep)] group-hover:gap-2 transition-all">
+        Choose plan <ArrowRight size={16} />
+      </div>
+    </Link>
   );
-};
+}
 
-// Feature Card Component with glassmorphism
-const FeatureCard = ({ icon, title, description, delay }) => (
-  <div 
-    className="relative group animate-slide-up"
-    style={{ animationDelay: delay }}
-  >
-    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-    <div className="relative bg-black/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-6 hover:border-gray-700 transition-all duration-300">
-      <div className="w-14 h-14 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+function Feature({ icon, title, desc }) {
+  return (
+    <div className="card p-5">
+      <div className="w-10 h-10 rounded-lg brand-blue-gradient text-white inline-flex items-center justify-center">
         {icon}
       </div>
-      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-      <p className="text-gray-400 text-sm">{description}</p>
+      <h4 className="mt-4 font-semibold text-[var(--color-ink)]">{title}</h4>
+      <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{desc}</p>
     </div>
-  </div>
-);
+  );
+}
 
-// Main Services Dashboard Component
-const ServicesNetwork = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+function Stat({ label, value, accent }) {
+  return (
+    <div className="text-center">
+      <div className={`text-2xl md:text-3xl font-black ${accent}`}>{value}</div>
+      <div className="mt-1 text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">{label}</div>
+    </div>
+  );
+}
+
+export default function Home() {
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth';
-    
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userId");
-    
-    if (token && userId) {
-      setIsLoggedIn(true);
-    }
-
-    // Mouse tracking for parallax effect
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    
-    return () => {
-      document.documentElement.style.scrollBehavior = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
+    const t = localStorage.getItem('token');
+    const u = localStorage.getItem('userId');
+    if (t && u) setIsLoggedIn(true);
+    return () => { document.documentElement.style.scrollBehavior = ''; };
   }, []);
 
-  const scrollToServices = (e) => {
-    e.preventDefault();
-    document.getElementById('services-section').scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
-    <div className="min-h-screen bg-black overflow-hidden">
-      {/* Hero Section with cyberpunk aesthetic */}
-      <div className="relative min-h-screen flex items-center justify-center">
-        {/* Dynamic background gradient */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 via-black to-cyan-900/20"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/10 via-transparent to-transparent"></div>
-        </div>
-        
-        {/* Animated grid background */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
-        
-        {/* Floating orbs with parallax */}
-        <div 
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse-slow"
-          style={{ transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02}px)` }}
-        ></div>
-        <div 
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse-slow animation-delay-2000"
-          style={{ transform: `translate(${mousePosition.x * -0.02}px, ${mousePosition.y * -0.02}px)` }}
-        ></div>
-        
-        {/* Hero Content */}
-        <div className="relative container mx-auto px-4 py-20 z-10">
-          <div className="text-center max-w-5xl mx-auto">
-            {/* Main Title */}
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black mb-6 animate-slide-up">
-              <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent animate-gradient-x">
-                dataSwap
+    <div className="bg-white">
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid opacity-60 [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" />
+        <div className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full bg-[var(--color-brand-blue-soft)] blur-3xl opacity-70" />
+        <div className="absolute -bottom-40 -left-32 w-[420px] h-[420px] rounded-full bg-[var(--color-brand-orange-soft)] blur-3xl opacity-70" />
+
+        <div className="relative container mx-auto px-4 pt-16 pb-20 lg:pt-24 lg:pb-28">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="animate-fadeInUp">
+              <span className="chip">
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-brand-blue)]" />
+                Built for Ghana &middot; Live now
               </span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-gray-400 mb-10 max-w-3xl mx-auto animate-slide-up animation-delay-200">
-              Buy data bundles instantly.
-              <span className="text-emerald-400"> Simple, fast, secure.</span>
-            </p>
-            
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap justify-center gap-6 mb-16 animate-slide-up animation-delay-400">
-              <Link href="/mtn" className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 blur-lg opacity-50 group-hover:opacity-75 transition-opacity rounded-xl"></div>
-                <div className="relative bg-gradient-to-r from-emerald-500 to-cyan-500 text-black px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center">
-                  <Zap className="mr-2" size={20} />
-                  Get Started
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-                </div>
-              </Link>
-              
-              <a 
-                href="#services-section"
-                onClick={scrollToServices}
-                className="bg-black/50 backdrop-blur-xl text-white border border-gray-700 hover:border-emerald-500/50 px-8 py-4 rounded-xl font-bold transition-all duration-300 flex items-center group"
-              >
-                <Database className="mr-2 text-cyan-400" size={20} />
-                Browse Plans
-                <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
-              </a>
-            </div>
-            
-            {/* Live Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-4xl mx-auto animate-slide-up animation-delay-600">
-              <div className="bg-black/50 backdrop-blur-xl border border-gray-800 rounded-xl p-4 hover:border-emerald-500/50 transition-all duration-300">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse mr-2"></div>
-                  <span className="text-xs text-gray-500 uppercase">Active Users</span>
-                </div>
-                <div className="text-2xl font-bold text-white">10K+</div>
+              <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[var(--color-brand-navy)] leading-[1.05]">
+                Buy data bundles
+                <br />
+                <span className="brand-gradient-text">in seconds.</span>
+              </h1>
+              <p className="mt-5 text-lg text-[var(--color-ink-soft)] max-w-xl">
+                Top up your DataSwap wallet once, then send MTN, Telecel, AT and AFA bundles
+                to any number &mdash; from your phone, anytime.
+              </p>
+
+              <div className="mt-7 flex flex-wrap gap-3">
+                <Link href={isLoggedIn ? '/mtn' : '/Auth'} className="btn-primary">
+                  {isLoggedIn ? 'Buy data now' : 'Get started free'} <ArrowRight size={18} />
+                </Link>
+                <a href="#networks" className="btn-ghost">
+                  Browse plans <ChevronRight size={18} />
+                </a>
               </div>
-              
-              <div className="bg-black/50 backdrop-blur-xl border border-gray-800 rounded-xl p-4 hover:border-cyan-500/50 transition-all duration-300">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse mr-2"></div>
-                  <span className="text-xs text-gray-500 uppercase">Daily Orders</span>
-                </div>
-                <div className="text-2xl font-bold text-white">500+</div>
-              </div>
-              
-              <div className="bg-black/50 backdrop-blur-xl border border-gray-800 rounded-xl p-4 hover:border-violet-500/50 transition-all duration-300">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse mr-2"></div>
-                  <span className="text-xs text-gray-500 uppercase">Uptime</span>
-                </div>
-                <div className="text-2xl font-bold text-white">99.9%</div>
-              </div>
-              
-              <div className="bg-black/50 backdrop-blur-xl border border-gray-800 rounded-xl p-4 hover:border-amber-500/50 transition-all duration-300">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse mr-2"></div>
-                  <span className="text-xs text-gray-500 uppercase">Support</span>
-                </div>
-                <div className="text-2xl font-bold text-white">24/7</div>
+
+              <div className="mt-8 flex items-center gap-5 text-sm text-[var(--color-ink-muted)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 size={16} className="text-emerald-500" /> Instant delivery
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CheckCircle2 size={16} className="text-emerald-500" /> Paystack secured
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1.5">
+                  <CheckCircle2 size={16} className="text-emerald-500" /> 24/7
+                </span>
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <ChevronRight className="text-gray-600 rotate-90" size={24} />
-        </div>
-      </div>
-      
-      {/* Features Section */}
-      <div className="relative py-20 bg-gradient-to-b from-black via-gray-950 to-black">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Why Choose dataSwap?</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Simple, secure, and reliable data services
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureCard 
-              icon={<Zap className="text-black" size={24} />}
-              title="Fast Processing"
-              description="Process transactions in seconds with optimized infrastructure"
-              delay="0ms"
-            />
-            <FeatureCard 
-              icon={<Shield className="text-black" size={24} />}
-              title="Secure Platform"
-              description="Advanced encryption protects every transaction"
-              delay="100ms"
-            />
-            <FeatureCard 
-              icon={<Clock className="text-black" size={24} />}
-              title="24/7 Service"
-              description="Round-the-clock availability with reliable uptime"
-              delay="200ms"
-            />
-            <FeatureCard 
-              icon={<Coins className="text-black" size={24} />}
-              title="Best Rates"
-              description="Competitive pricing ensures great value"
-              delay="300ms"
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Services Section */}
-      <div id="services-section" className="relative py-20 scroll-mt-20">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-gray-950 to-black"></div>
-        
-        <div className="relative container mx-auto px-4 z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Choose Your Network</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">
-              Select your preferred network provider
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <NetworkProviderCard provider="mtn" />
-            <NetworkProviderCard provider="at" />
-            <NetworkProviderCard provider="telecel" />
-          </div>
-          
-          {/* CTA Section */}
-          {isLoggedIn && (
-            <div className="mt-20">
-              <div className="relative group max-w-4xl mx-auto">
-                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-30 transition-opacity rounded-2xl"></div>
-                <div className="relative bg-black/90 backdrop-blur-xl border border-gray-800 rounded-2xl p-12 text-center">
-                  <h3 className="text-3xl font-bold text-white mb-4">Ready to Get Started?</h3>
-                  <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
-                    Fund your wallet and start buying data instantly
-                  </p>
-                  <Link href="/deposite" className="relative inline-flex group/btn">
-                    <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-cyan-500 blur-lg opacity-50 group-hover/btn:opacity-75 transition-opacity rounded-xl"></div>
-                    <div className="relative bg-gradient-to-r from-emerald-500 to-cyan-500 text-black px-10 py-4 rounded-xl font-bold transition-all duration-300 flex items-center">
-                      <Wallet className="mr-2" size={20} />
-                      Top Up Wallet
-                      <ArrowRight className="ml-2 group-hover/btn:translate-x-2 transition-transform" size={20} />
+
+            {/* Visual preview card */}
+            <div className="relative animate-fadeInUp delay-150">
+              <div className="absolute -inset-4 brand-gradient-bg opacity-15 blur-3xl rounded-[2rem]" />
+              <div className="relative card p-6 lg:p-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">Wallet balance</p>
+                    <p className="mt-1 text-3xl font-black text-[var(--color-brand-navy)]">GHS 248.50</p>
+                  </div>
+                  <button className="btn-accent !py-2 !px-3 text-sm">
+                    <Wallet size={16} /> Top up
+                  </button>
+                </div>
+
+                <div className="mt-6 grid grid-cols-3 gap-2">
+                  {networks.map(n => (
+                    <div key={n.id} className="rounded-xl border border-[var(--color-line)] p-3 text-center">
+                      <div
+                        className="mx-auto mb-2 w-9 h-9 rounded-lg inline-flex items-center justify-center text-xs font-black"
+                        style={{ background: n.accentSoft, color: n.accentText }}
+                      >
+                        {n.name.slice(0, 2)}
+                      </div>
+                      <p className="text-[11px] font-semibold text-[var(--color-ink)]">{n.name}</p>
                     </div>
-                  </Link>
+                  ))}
+                </div>
+
+                <div className="mt-6 space-y-3">
+                  {[
+                    { label: '0244 123 456', net: 'MTN', vol: '2GB', amt: '10.00' },
+                    { label: '0207 654 321', net: 'Telecel', vol: '5GB', amt: '24.00' },
+                    { label: '0265 987 234', net: 'AT', vol: '1GB', amt: '4.50' },
+                  ].map((tx, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)]">
+                      <div className="flex items-center gap-3">
+                        <span className="w-9 h-9 rounded-lg bg-white border border-[var(--color-line)] inline-flex items-center justify-center">
+                          <Smartphone size={16} className="text-[var(--color-brand-blue-deep)]" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--color-ink)]">{tx.vol} &middot; {tx.net}</p>
+                          <p className="text-xs text-[var(--color-ink-muted)]">{tx.label}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-[var(--color-ink)]">GHS {tx.amt}</p>
+                        <span className="chip-success chip !py-0 !px-2">Delivered</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Stats */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto card p-6">
+            <Stat label="Active users" value="10K+" accent="text-[var(--color-brand-blue-deep)]" />
+            <Stat label="Daily orders" value="500+" accent="text-[var(--color-brand-orange)]" />
+            <Stat label="Uptime" value="99.9%" accent="text-emerald-600" />
+            <Stat label="Support" value="24/7" accent="text-[var(--color-brand-navy)]" />
+          </div>
         </div>
-      </div>
-      
-      {/* Custom CSS for animations */}
-      <style jsx global>{`
-        @keyframes gradient-x {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        
-        .animate-gradient-x {
-          background-size: 200% 200%;
-          animation: gradient-x 3s ease infinite;
-        }
-        
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.1; transform: scale(1); }
-          50% { opacity: 0.2; transform: scale(1.1); }
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 8s ease-in-out infinite;
-        }
-        
-        @keyframes slide-up {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-slide-up {
-          animation: slide-up 0.8s ease-out forwards;
-        }
-        
-        @keyframes slide-down {
-          from { opacity: 0; transform: translateY(-20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-slide-down {
-          animation: slide-down 0.8s ease-out forwards;
-        }
-        
-        @keyframes float-particle {
-          0% { transform: translateY(0) translateX(0); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(-100px) translateX(50px); opacity: 0; }
-        }
-        
-        .animate-float-particle {
-          animation: float-particle 3s ease-in-out infinite;
-        }
-        
-        .animation-delay-200 { animation-delay: 200ms; }
-        .animation-delay-400 { animation-delay: 400ms; }
-        .animation-delay-600 { animation-delay: 600ms; }
-        .animation-delay-2000 { animation-delay: 2000ms; }
-        
-        .bg-grid-pattern {
-          background-image: 
-            linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-          background-size: 50px 50px;
-        }
-      `}</style>
+      </section>
+
+      {/* ── Why DataSwap ─────────────────────────────────── */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center max-w-2xl mx-auto">
+          <span className="chip-orange chip">Why DataSwap</span>
+          <h2 className="mt-4 text-3xl md:text-4xl font-black text-[var(--color-brand-navy)]">
+            Built for the way you actually use data.
+          </h2>
+          <p className="mt-3 text-[var(--color-ink-muted)]">
+            No app downloads. No SIM swaps. Just sign up, top up, send.
+          </p>
+        </div>
+
+        <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <Feature icon={<Zap size={18} />}        title="Seconds, not minutes"  desc="Bundles arrive on the recipient's line within seconds of payment." />
+          <Feature icon={<ShieldCheck size={18} />} title="Paystack secured"      desc="Card and mobile money payments protected by Paystack." />
+          <Feature icon={<Clock size={18} />}      title="Buy any time"          desc="Order around the clock; we process Sunday orders Monday morning." />
+          <Feature icon={<BarChart3 size={18} />}  title="Track every order"     desc="Live order history with delivery status for every transaction." />
+        </div>
+      </section>
+
+      {/* ── Networks ─────────────────────────────────────── */}
+      <section id="networks" className="bg-[var(--color-surface-muted)] border-y border-[var(--color-line)]">
+        <div className="container mx-auto px-4 py-20">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="chip">Pick a network</span>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black text-[var(--color-brand-navy)]">
+              Choose your network to start.
+            </h2>
+            <p className="mt-3 text-[var(--color-ink-muted)]">
+              Same wallet works across MTN, Telecel and AT.
+            </p>
+          </div>
+
+          <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+            {networks.map(n => <NetworkCard key={n.id} n={n} />)}
+          </div>
+
+          <div className="mt-6 max-w-5xl mx-auto">
+            <Link
+              href="/afa"
+              className="card flex items-center justify-between p-5 group hover:-translate-y-0.5 transition-transform"
+            >
+              <div className="flex items-center gap-4">
+                <span className="w-10 h-10 rounded-lg brand-orange-gradient text-white inline-flex items-center justify-center font-bold">
+                  AFA
+                </span>
+                <div>
+                  <p className="font-semibold text-[var(--color-ink)]">AFA Registration</p>
+                  <p className="text-sm text-[var(--color-ink-muted)]">Register a new line in minutes.</p>
+                </div>
+              </div>
+              <ArrowRight className="text-[var(--color-brand-blue-deep)] group-hover:translate-x-1 transition-transform" size={18} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── How it works ─────────────────────────────────── */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="chip">Three steps</span>
+            <h2 className="mt-4 text-3xl md:text-4xl font-black text-[var(--color-brand-navy)]">
+              From sign up to first bundle in under a minute.
+            </h2>
+            <ol className="mt-8 space-y-5">
+              {[
+                ['Create your account', 'Sign up with email and a password — no document upload required.'],
+                ['Top up your wallet', 'Pay with Mobile Money or card via Paystack. Funds land instantly.'],
+                ['Send data anywhere', 'Pick a network, type the recipient number, choose a bundle, done.'],
+              ].map(([t, d], i) => (
+                <li key={t} className="flex gap-4">
+                  <span className="shrink-0 w-9 h-9 rounded-full brand-blue-gradient text-white inline-flex items-center justify-center font-bold">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="font-semibold text-[var(--color-ink)]">{t}</p>
+                    <p className="text-sm text-[var(--color-ink-muted)]">{d}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-8">
+              <Link href={isLoggedIn ? '/deposite' : '/Auth'} className="btn-primary">
+                {isLoggedIn ? 'Top up wallet' : 'Open my account'} <ArrowRight size={18} />
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative">
+            <div className="absolute -inset-6 brand-gradient-bg opacity-10 blur-3xl rounded-[2rem]" />
+            <div className="relative card p-7">
+              <div className="flex items-center gap-2">
+                {[1,2,3,4,5].map(i => <Star key={i} size={16} className="fill-amber-400 text-amber-400" />)}
+                <span className="text-sm text-[var(--color-ink-muted)] ml-2">4.9 / 5 from 1,200+ users</span>
+              </div>
+              <blockquote className="mt-5 text-lg text-[var(--color-ink)] leading-relaxed">
+                &ldquo;DataSwap completely replaced the half-dozen agent numbers I used to call.
+                Top up once, send to my whole family.&rdquo;
+              </blockquote>
+              <div className="mt-5 flex items-center gap-3">
+                <span className="w-10 h-10 rounded-full brand-orange-gradient text-white inline-flex items-center justify-center font-bold">
+                  AB
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-ink)]">Abena B.</p>
+                  <p className="text-xs text-[var(--color-ink-muted)]">Customer in Kumasi</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ──────────────────────────────────────────── */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="relative overflow-hidden rounded-3xl brand-gradient-bg p-10 md:p-14 text-center text-white">
+          <div className="absolute inset-0 bg-dots opacity-10" />
+          <div className="relative">
+            <h2 className="text-3xl md:text-4xl font-black">Ready to send your first bundle?</h2>
+            <p className="mt-3 text-white/85 max-w-xl mx-auto">
+              Free to sign up. Pay only for the data you send.
+            </p>
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
+              <Link
+                href={isLoggedIn ? '/deposite' : '/Auth'}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-[var(--color-brand-navy)] font-semibold hover:bg-[var(--color-brand-blue-soft)] transition-colors"
+              >
+                {isLoggedIn ? 'Top up wallet' : 'Create account'} <ArrowRight size={18} />
+              </Link>
+              <Link
+                href="/mtn"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-white/30 text-white font-semibold hover:bg-white/10 transition-colors"
+              >
+                See MTN plans
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
-};
-
-export default ServicesNetwork;
+}
