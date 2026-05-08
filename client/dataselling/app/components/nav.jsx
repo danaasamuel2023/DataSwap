@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Menu, X, Home, User, LogOut, Users, Wallet,
-  ShoppingBag, ChevronDown, ArrowRight, Receipt, Settings
+  Menu, X, Home, LogOut, Users, Wallet, ShoppingBag, ChevronDown,
+  ArrowRight, Receipt, Settings, CreditCard, Loader2, Plus,
 } from 'lucide-react';
 import Logo from './logo';
 import ThemeToggle from './theme-toggle';
@@ -21,6 +21,7 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState('');
   const [username, setUsername] = useState('');
   const [userRole, setUserRole] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
@@ -28,14 +29,20 @@ export default function Navbar() {
   const [networksOpen, setNetworksOpen] = useState(false);
   const [logoutToast, setLogoutToast] = useState(false);
 
+  // Add-money form
+  const [topupAmount, setTopupAmount] = useState('');
+  const [topupBusy, setTopupBusy] = useState(false);
+  const [topupErr, setTopupErr] = useState('');
+
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uId = localStorage.getItem('userId');
     const token = localStorage.getItem('token');
-    if (userId) {
+    if (uId) {
       setIsLoggedIn(true);
+      setUserId(uId);
       setUsername(localStorage.getItem('username') || 'User');
       setUserRole(localStorage.getItem('userrole') || '');
-      if (token) fetchBalance(userId, token);
+      if (token) fetchBalance(uId, token);
     }
 
     document.body.style.overflow = mobileOpen ? 'hidden' : 'unset';
@@ -54,10 +61,10 @@ export default function Navbar() {
     };
   }, [mobileOpen, networksOpen]);
 
-  const fetchBalance = async (userId, token) => {
+  async function fetchBalance(uid, token) {
     try {
       const r = await fetch(
-        `https://dataswap-ydgo.onrender.com/api/wallet/balance?userId=${userId}`,
+        `https://dataswap-ydgo.onrender.com/api/wallet/balance?userId=${uid}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (r.ok) {
@@ -65,10 +72,42 @@ export default function Navbar() {
         setWalletBalance(data.balance || 0);
       }
     } catch (_) {}
-  };
+  }
+
+  async function handleQuickTopup(e) {
+    e.preventDefault();
+    setTopupErr('');
+    const v = parseFloat(topupAmount);
+    if (!v || isNaN(v) || v <= 0) return setTopupErr('Enter an amount.');
+    if (v < 10) return setTopupErr('Minimum is GHS 10.');
+
+    setTopupBusy(true);
+    try {
+      const r = await fetch('https://dataswap-ydgo.onrender.com/api/wallet/add-funds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          email: localStorage.getItem('email') || '',
+          amount: v,
+          paymentMethod: 'paystack',
+        }),
+      });
+      const data = await r.json();
+      if (data?.success && data.authorizationUrl) {
+        window.location.href = data.authorizationUrl;
+        return;
+      }
+      setTopupErr(data?.error || 'Top-up failed. Try again.');
+    } catch (_) {
+      setTopupErr('Network error. Try again.');
+    } finally {
+      setTopupBusy(false);
+    }
+  }
 
   const handleLogout = () => {
-    ['userId','username','token','userrole'].forEach(k => localStorage.removeItem(k));
+    ['userId','username','token','userrole','email'].forEach(k => localStorage.removeItem(k));
     setIsLoggedIn(false);
     setMobileOpen(false);
     setLogoutToast(true);
@@ -80,11 +119,18 @@ export default function Navbar() {
     pathname === href
       ? 'text-[var(--color-brand-blue-deep)] bg-[var(--color-brand-blue-soft)]'
       : 'text-[var(--color-ink-soft)] hover:text-[var(--color-brand-navy)] hover:bg-[var(--color-surface-muted)]';
+  const drawerLink = (href) =>
+    pathname === href
+      ? 'text-[var(--color-ink)] bg-[var(--color-surface-muted)]'
+      : 'text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]';
+
+  // ID display: "ID-XXXXXX" from last chars of MongoDB ObjectId
+  const displayId = userId ? `ID-${userId.slice(-6).toUpperCase()}` : '';
 
   return (
     <>
       {logoutToast && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] card px-5 py-3 flex items-center gap-3 animate-fadeInDown">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[90] card px-5 py-3 flex items-center gap-3 animate-fadeInDown">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-soft" />
           <span className="text-sm font-medium text-[var(--color-ink)]">Signed out — redirecting…</span>
         </div>
@@ -199,65 +245,48 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile drawer + overlay live OUTSIDE the sticky nav so they
-          aren't trapped in its stacking context (otherwise the WhatsApp
-          floating button and other fixed elements end up on top). */}
+      {/* ── Mobile drawer + overlay (siblings of nav, top stacking) ── */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-[var(--color-brand-navy)]/55 backdrop-blur-[2px] z-[70] lg:hidden"
+          className="fixed inset-0 bg-black/55 backdrop-blur-[2px] z-[70] lg:hidden"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
       )}
 
-      <div
+      <aside
         id="mobile-menu"
-        className={`fixed top-0 right-0 h-full w-[88%] max-w-sm bg-[var(--color-surface)] border-l border-[var(--color-line)] shadow-2xl z-[80] transform transition-transform duration-300 lg:hidden ${
-          mobileOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+        className={`fixed top-0 left-0 h-full w-[88%] max-w-sm bg-[var(--color-surface)] border-r border-[var(--color-line)] shadow-2xl z-[80] transform transition-transform duration-300 lg:hidden flex flex-col ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         }`}
         aria-hidden={!mobileOpen}
       >
-          <div className="p-4 border-b border-[var(--color-line)] flex items-center justify-between">
-            <Logo size={28} />
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="p-2 rounded-lg border border-[var(--color-line)] text-[var(--color-ink)]"
-              aria-label="Close menu"
-            >
-              <X size={18} />
-            </button>
-          </div>
+        {/* Header */}
+        <div className="px-5 py-4 flex items-center justify-between border-b border-[var(--color-line)]">
+          <h2 className="text-xl font-black text-[var(--color-ink)]">Account</h2>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="p-2 -mr-2 rounded-lg text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]"
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-          {isLoggedIn && (
-            <div className="p-4 border-b border-[var(--color-line)]">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-full brand-blue-gradient text-white inline-flex items-center justify-center text-sm font-bold">
-                  {(username || 'U').slice(0, 1).toUpperCase()}
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-[var(--color-ink)]">{username}</span>
-                    {isAdmin && <span className="chip-orange chip">ADMIN</span>}
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--color-brand-blue-soft)]">
-                    <Wallet size={14} className="text-[var(--color-brand-blue-deep)]" />
-                    <span className="text-xs text-[var(--color-ink-muted)]">Wallet</span>
-                    <span className="ml-auto text-sm font-bold text-[var(--color-brand-navy)]">
-                      GHS {Number(walletBalance).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="px-3 py-4 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 220px)' }}>
-            <Link href="/" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/')}`}>
-              <Home size={18} /> Home
+        {/* Body — scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Nav list */}
+          <nav className="px-3 pt-3 pb-1 space-y-0.5">
+            <Link href="/" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/')}`}>
+              <Home size={18} /> Dashboard
+            </Link>
+            <Link href="/orders" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/orders')}`}>
+              <Receipt size={18} /> Orders
             </Link>
 
+            {/* Buy data sub-list */}
             <div className="pt-2">
-              <p className="px-3 pb-1 text-[11px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
+              <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
                 Buy data
               </p>
               {networkProviders.map(p => (
@@ -265,7 +294,7 @@ export default function Navbar() {
                   key={p.id}
                   href={`/${p.id}`}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive(`/${p.id}`)}`}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink(`/${p.id}`)}`}
                 >
                   <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.dot }} />
                   {p.name}
@@ -273,42 +302,129 @@ export default function Navbar() {
               ))}
             </div>
 
-            <Link href="/deposite" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/deposite')}`}>
-              <Wallet size={18} /> Top up wallet
-            </Link>
-            <Link href="/orders" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/orders')}`}>
-              <Receipt size={18} /> My orders
-            </Link>
-            {isAdmin && (
-              <>
-                <Link href="/admin" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/admin')}`}>
-                  <Settings size={18} /> Admin dashboard
-                </Link>
-                <Link href="/users" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${linkActive('/users')}`}>
-                  <Users size={18} /> Manage users
-                </Link>
-              </>
-            )}
-          </div>
+            <div className="pt-2">
+              <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
+                Wallet
+              </p>
+              <Link href="/deposite" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/deposite')}`}>
+                <Wallet size={16} /> Top up wallet
+              </Link>
+            </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[var(--color-line)] bg-[var(--color-surface)] space-y-2">
-            <ThemeToggle className="w-full" />
-            {isLoggedIn ? (
-              <button onClick={handleLogout} className="btn-ghost w-full !text-[var(--color-danger)] hover:!border-[var(--color-danger)]">
-                <LogOut size={16} /> Sign out
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-ghost text-sm">
-                  Sign in
+            {isAdmin && (
+              <div className="pt-2">
+                <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
+                  Admin
+                </p>
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/admin')}`}>
+                  <Settings size={16} /> Dashboard
                 </Link>
-                <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-primary text-sm">
-                  Get started
+                <Link href="/users" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/users')}`}>
+                  <Users size={16} /> Manage users
                 </Link>
               </div>
             )}
-          </div>
-      </div>
+
+            {isLoggedIn && (
+              <button onClick={handleLogout} className="w-full mt-2 flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium text-[var(--color-danger)] hover:bg-[rgba(220,38,38,.08)]">
+                <LogOut size={18} /> Log out
+              </button>
+            )}
+          </nav>
+
+          {/* Balance card */}
+          {isLoggedIn && (
+            <div className="px-4 pt-4">
+              <div className="rounded-2xl p-5 border border-[var(--color-line)] bg-[var(--color-surface-muted)]">
+                <p className="text-[10px] uppercase tracking-[.18em] text-[var(--color-ink-muted)] text-center font-bold">
+                  Available balance
+                </p>
+                <p className="mt-2 text-center text-4xl font-black text-emerald-500 tabular-nums">
+                  GH₵{Number(walletBalance).toFixed(2)}
+                </p>
+
+                <div className="mt-3 flex items-center justify-between text-xs px-2">
+                  <span className="text-[var(--color-ink-muted)] uppercase tracking-wider">Today</span>
+                  <span className="text-emerald-500 font-semibold">+GH₵0.00</span>
+                  <span className="text-red-400 font-semibold">−GH₵0.00</span>
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-[var(--color-line)] flex items-center gap-3">
+                  <span className="w-10 h-10 rounded-full brand-blue-gradient text-white inline-flex items-center justify-center text-sm font-bold shrink-0">
+                    {(username || 'U').slice(0, 1).toUpperCase()}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-[var(--color-ink)] truncate">{username}</span>
+                      {isAdmin && <span className="chip-orange chip">ADMIN</span>}
+                    </div>
+                    <p className="text-xs text-[var(--color-ink-muted)] font-mono">{displayId}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add money */}
+          {isLoggedIn && (
+            <form onSubmit={handleQuickTopup} className="px-4 pt-4 pb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-8 h-8 rounded-lg brand-blue-gradient inline-flex items-center justify-center">
+                  <Wallet size={16} className="text-white" />
+                </span>
+                <h3 className="font-bold text-[var(--color-ink)]">Add Money</h3>
+              </div>
+
+              <Link
+                href="/deposite"
+                onClick={() => setMobileOpen(false)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 text-sm font-semibold transition-colors"
+              >
+                <CreditCard size={14} /> Paystack
+              </Link>
+
+              <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-ink-muted)] font-semibold">₵</span>
+                  <input
+                    type="number" inputMode="decimal" min="10" step="0.01"
+                    value={topupAmount}
+                    onChange={(e) => { setTopupAmount(e.target.value); setTopupErr(''); }}
+                    placeholder="Enter amount"
+                    className="input pl-7 !py-2.5 text-sm"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={topupBusy}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold inline-flex items-center gap-1.5 disabled:opacity-60 transition-colors"
+                >
+                  {topupBusy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                  Topup
+                </button>
+              </div>
+              {topupErr && <p className="mt-2 text-xs text-red-400">{topupErr}</p>}
+              <p className="mt-2 text-[11px] text-[var(--color-ink-subtle)]">Minimum top-up: GHS 10.00</p>
+            </form>
+          )}
+
+          {!isLoggedIn && (
+            <div className="px-4 pt-4 grid grid-cols-2 gap-2">
+              <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-ghost text-sm">
+                Sign in
+              </Link>
+              <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-primary text-sm">
+                Get started
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Footer — theme toggle */}
+        <div className="px-4 py-3 border-t border-[var(--color-line)] bg-[var(--color-surface)]">
+          <ThemeToggle className="w-full" />
+        </div>
+      </aside>
     </>
   );
 }
