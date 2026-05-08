@@ -33,9 +33,24 @@ export const metadata = {
   },
 };
 
+// Runs before the page paints — sets data-theme so there's no flash.
+const themeInitScript = `
+(function () {
+  try {
+    var stored = localStorage.getItem('dataswap-theme');
+    var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.colorScheme = theme;
+  } catch (_) {}
+})();
+`;
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen flex flex-col">
         <Navbar />
         <main className="flex-grow">

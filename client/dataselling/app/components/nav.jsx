@@ -8,6 +8,7 @@ import {
   ShoppingBag, ChevronDown, ArrowRight, Receipt, Settings
 } from 'lucide-react';
 import Logo from './logo';
+import ThemeToggle from './theme-toggle';
 
 const networkProviders = [
   { id: 'mtn',     name: 'MTN',     dot: '#FFCB05' },
@@ -158,12 +159,14 @@ export default function Navbar() {
                     {isAdmin && <span className="chip-orange chip">ADMIN</span>}
                   </div>
 
+                  <ThemeToggle compact />
                   <button onClick={handleLogout} className="btn-ghost !py-2 !px-3 text-sm">
                     <LogOut size={16} /> Sign out
                   </button>
                 </>
               ) : (
                 <>
+                  <ThemeToggle compact />
                   <Link href="/Auth" className="btn-ghost !py-2 !px-4 text-sm">Sign in</Link>
                   <Link href="/Auth" className="btn-primary !py-2 !px-4 text-sm">
                     Get started <ArrowRight size={16} />
@@ -181,6 +184,7 @@ export default function Navbar() {
                   </span>
                 </div>
               )}
+              <ThemeToggle compact />
               <button
                 id="menu-button"
                 onClick={() => setMobileOpen(v => !v)}
@@ -275,7 +279,8 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[var(--color-line)] bg-white">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[var(--color-line)] bg-[var(--color-surface)] space-y-2">
+            <ThemeToggle className="w-full" />
             {isLoggedIn ? (
               <button onClick={handleLogout} className="btn-ghost w-full !text-[var(--color-danger)] hover:!border-[var(--color-danger)]">
                 <LogOut size={16} /> Sign out
