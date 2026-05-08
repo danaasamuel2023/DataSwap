@@ -197,14 +197,26 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile drawer */}
+      {/* Mobile drawer + overlay live OUTSIDE the sticky nav so they
+          aren't trapped in its stacking context (otherwise the WhatsApp
+          floating button and other fixed elements end up on top). */}
+      {mobileOpen && (
         <div
-          id="mobile-menu"
-          className={`fixed top-0 right-0 h-full w-[88%] max-w-sm bg-white border-l border-[var(--color-line)] shadow-2xl z-50 transform transition-transform duration-300 ${
-            mobileOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
-        >
+          className="fixed inset-0 bg-[var(--color-brand-navy)]/55 backdrop-blur-[2px] z-[70] lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <div
+        id="mobile-menu"
+        className={`fixed top-0 right-0 h-full w-[88%] max-w-sm bg-[var(--color-surface)] border-l border-[var(--color-line)] shadow-2xl z-[80] transform transition-transform duration-300 lg:hidden ${
+          mobileOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+        }`}
+        aria-hidden={!mobileOpen}
+      >
           <div className="p-4 border-b border-[var(--color-line)] flex items-center justify-between">
             <Logo size={28} />
             <button
@@ -296,15 +308,7 @@ export default function Navbar() {
               </div>
             )}
           </div>
-        </div>
-
-        {mobileOpen && (
-          <div
-            className="fixed inset-0 bg-[var(--color-brand-navy)]/40 backdrop-blur-[2px] z-40 lg:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-        )}
-      </nav>
+      </div>
     </>
   );
 }

@@ -5,7 +5,7 @@ const WhatsAppLink = () => {
   const whatsappLink = 'https://whatsapp.com/channel/0029VbB174796H4JCaqzq43S';
 
   return (
-    <div className="fixed right-5 bottom-5 z-40">
+    <div className="fixed right-5 bottom-5 z-30">
       <Link
         href={whatsappLink}
         target="_blank"
