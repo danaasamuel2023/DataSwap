@@ -35,6 +35,7 @@ export default function Navbar() {
   const [topupBusy, setTopupBusy] = useState(false);
   const [topupErr, setTopupErr] = useState('');
   const [buyDataOpen, setBuyDataOpen] = useState(false);
+  const [walletPanelOpen, setWalletPanelOpen] = useState(false);
 
   useEffect(() => {
     const uId = localStorage.getItem('userId');
@@ -58,13 +59,27 @@ export default function Navbar() {
       if (networksOpen && !e.target.closest('#networks-dropdown')) {
         setNetworksOpen(false);
       }
+      if (walletPanelOpen && !e.target.closest('#wallet-panel') && !e.target.closest('#wallet-trigger')) {
+        setWalletPanelOpen(false);
+      }
     };
     document.addEventListener('click', onClick);
     return () => {
       document.removeEventListener('click', onClick);
       document.body.style.overflow = 'unset';
     };
-  }, [mobileOpen, networksOpen]);
+  }, [mobileOpen, networksOpen, walletPanelOpen]);
+
+  // Refresh balance + today's summary when the panel opens
+  useEffect(() => {
+    if (walletPanelOpen && userId) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        fetchBalance(userId, token);
+        fetchTodaySummary(userId, token);
+      }
+    }
+  }, [walletPanelOpen, userId]);
 
   async function fetchBalance(uid, token) {
     try {
@@ -209,12 +224,100 @@ export default function Navbar() {
             <div className="hidden lg:flex items-center gap-3">
               {isLoggedIn ? (
                 <>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-brand-blue-soft)] border border-[rgba(30,136,255,.18)]">
-                    <Wallet size={14} className="text-[var(--color-brand-blue-deep)]" />
-                    <span className="text-xs text-[var(--color-ink-muted)]">Bal</span>
-                    <span className="text-sm font-bold text-[var(--color-brand-navy)]">
-                      GHS {Number(walletBalance).toFixed(2)}
-                    </span>
+                  {/* Wallet trigger — opens rich panel */}
+                  <div className="relative">
+                    <button
+                      id="wallet-trigger"
+                      onClick={() => setWalletPanelOpen(v => !v)}
+                      aria-expanded={walletPanelOpen}
+                      className="group flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-brand-blue-soft)] border border-[rgba(30,136,255,.18)] hover:border-[var(--color-brand-blue)] transition-colors"
+                    >
+                      <Wallet size={14} className="text-[var(--color-brand-blue-deep)]" />
+                      <span className="text-xs text-[var(--color-ink-muted)]">Bal</span>
+                      <span className="text-sm font-bold text-[var(--color-brand-navy)] tabular-nums">
+                        GH₵{Number(walletBalance).toFixed(2)}
+                      </span>
+                      <ChevronDown size={12} className={`text-[var(--color-ink-muted)] transition-transform ${walletPanelOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {walletPanelOpen && (
+                      <div
+                        id="wallet-panel"
+                        className="absolute right-0 top-full mt-2 w-80 card overflow-hidden animate-scaleIn z-[60]"
+                      >
+                        {/* Balance */}
+                        <div className="p-5 border-b border-[var(--color-line)] bg-[var(--color-surface-muted)]">
+                          <p className="text-[10px] uppercase tracking-[.18em] text-[var(--color-ink-muted)] text-center font-bold">
+                            Available balance
+                          </p>
+                          <p className="mt-1.5 text-center text-3xl font-black text-emerald-500 tabular-nums">
+                            GH₵{Number(walletBalance).toFixed(2)}
+                          </p>
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-2 text-center">
+                              <p className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)] font-bold">Today in</p>
+                              <p className="text-sm font-bold text-emerald-500 tabular-nums">+GH₵{Number(today.credits).toFixed(2)}</p>
+                            </div>
+                            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-2 text-center">
+                              <p className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)] font-bold">Today out</p>
+                              <p className="text-sm font-bold text-red-400 tabular-nums">−GH₵{Number(today.debits).toFixed(2)}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 flex items-center gap-2.5">
+                            <span className="w-8 h-8 rounded-full brand-blue-gradient text-white inline-flex items-center justify-center text-xs font-bold shrink-0">
+                              {(username || 'U').slice(0, 1).toUpperCase()}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-[var(--color-ink)] truncate">{username}</span>
+                                {isAdmin && <span className="chip-orange chip">ADMIN</span>}
+                              </div>
+                              <p className="text-[10px] text-[var(--color-ink-muted)] font-mono">{displayId}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Add money */}
+                        <form onSubmit={handleQuickTopup} className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="w-7 h-7 rounded-lg brand-blue-gradient inline-flex items-center justify-center">
+                              <Wallet size={14} className="text-white" />
+                            </span>
+                            <h3 className="font-bold text-[var(--color-ink)] text-sm">Add Money</h3>
+                          </div>
+                          <div className="grid grid-cols-[1fr_auto] gap-2">
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-ink-muted)] font-semibold">₵</span>
+                              <input
+                                type="number" inputMode="decimal" min="10" step="0.01"
+                                value={topupAmount}
+                                onChange={(e) => { setTopupAmount(e.target.value); setTopupErr(''); }}
+                                placeholder="Enter amount"
+                                className="input pl-7 !py-2 text-sm"
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={topupBusy}
+                              className="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold inline-flex items-center gap-1.5 disabled:opacity-60 transition-colors"
+                            >
+                              {topupBusy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                              Topup
+                            </button>
+                          </div>
+                          {topupErr && <p className="mt-2 text-xs text-red-400">{topupErr}</p>}
+                          <p className="mt-2 text-[10px] text-[var(--color-ink-subtle)]">Min top-up: GHS 10.00 · Secured by Paystack</p>
+
+                          <Link
+                            href="/deposite"
+                            onClick={() => setWalletPanelOpen(false)}
+                            className="mt-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--color-line)] hover:border-emerald-500/40 hover:bg-emerald-500/10 text-xs font-semibold text-[var(--color-ink)] transition-colors"
+                          >
+                            <CreditCard size={12} /> More options
+                          </Link>
+                        </form>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 pl-2">
