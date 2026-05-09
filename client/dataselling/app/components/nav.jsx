@@ -34,6 +34,7 @@ export default function Navbar() {
   const [topupAmount, setTopupAmount] = useState('');
   const [topupBusy, setTopupBusy] = useState(false);
   const [topupErr, setTopupErr] = useState('');
+  const [buyDataOpen, setBuyDataOpen] = useState(false);
 
   useEffect(() => {
     const uId = localStorage.getItem('userId');
@@ -292,66 +293,10 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Body — scrollable */}
+        {/* Body — scrollable. Balance + Add Money sit at the top so
+            users see them without scrolling; menu lives below. */}
         <div className="flex-1 overflow-y-auto">
-          {/* Nav list */}
-          <nav className="px-3 pt-3 pb-1 space-y-0.5">
-            <Link href="/" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/')}`}>
-              <Home size={18} /> Dashboard
-            </Link>
-            <Link href="/orders" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/orders')}`}>
-              <Receipt size={18} /> Orders
-            </Link>
-
-            {/* Buy data sub-list */}
-            <div className="pt-2">
-              <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
-                Buy data
-              </p>
-              {networkProviders.map(p => (
-                <Link
-                  key={p.id}
-                  href={`/${p.id}`}
-                  onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink(`/${p.id}`)}`}
-                >
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.dot }} />
-                  {p.name}
-                </Link>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
-                Wallet
-              </p>
-              <Link href="/deposite" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/deposite')}`}>
-                <Wallet size={16} /> Top up wallet
-              </Link>
-            </div>
-
-            {isAdmin && (
-              <div className="pt-2">
-                <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
-                  Admin
-                </p>
-                <Link href="/admin" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/admin')}`}>
-                  <Settings size={16} /> Dashboard
-                </Link>
-                <Link href="/users" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/users')}`}>
-                  <Users size={16} /> Manage users
-                </Link>
-              </div>
-            )}
-
-            {isLoggedIn && (
-              <button onClick={handleLogout} className="w-full mt-2 flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium text-[var(--color-danger)] hover:bg-[rgba(220,38,38,.08)]">
-                <LogOut size={18} /> Log out
-              </button>
-            )}
-          </nav>
-
-          {/* Balance card */}
+          {/* ── Balance card ── */}
           {isLoggedIn && (
             <div className="px-4 pt-4">
               <div className="rounded-2xl p-5 border border-[var(--color-line)] bg-[var(--color-surface-muted)]">
@@ -384,9 +329,9 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Add money */}
+          {/* ── Add money ── */}
           {isLoggedIn && (
-            <form onSubmit={handleQuickTopup} className="px-4 pt-4 pb-6">
+            <form onSubmit={handleQuickTopup} className="px-4 pt-4">
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-8 h-8 rounded-lg brand-blue-gradient inline-flex items-center justify-center">
                   <Wallet size={16} className="text-white" />
@@ -427,6 +372,67 @@ export default function Navbar() {
             </form>
           )}
 
+          {/* ── Nav list (below balance/topup) ── */}
+          <nav className="px-3 pt-4 pb-2 space-y-0.5">
+            <Link href="/" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/')}`}>
+              <Home size={18} /> Dashboard
+            </Link>
+            <Link href="/orders" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/orders')}`}>
+              <Receipt size={18} /> Orders
+            </Link>
+            <Link href="/deposite" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium ${drawerLink('/deposite')}`}>
+              <Wallet size={18} /> Top up wallet
+            </Link>
+
+            {/* Collapsible Buy data */}
+            <button
+              onClick={() => setBuyDataOpen(v => !v)}
+              aria-expanded={buyDataOpen}
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium text-[var(--color-ink-soft)] hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-muted)]`}
+            >
+              <ShoppingBag size={18} />
+              Buy data
+              <ChevronDown size={16} className={`ml-auto transition-transform ${buyDataOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <div
+              className={`overflow-hidden transition-[max-height,opacity] duration-300 ${buyDataOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'}`}
+            >
+              <div className="pl-3 ml-3 border-l border-[var(--color-line)] space-y-0.5">
+                {networkProviders.map(p => (
+                  <Link
+                    key={p.id}
+                    href={`/${p.id}`}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink(`/${p.id}`)}`}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.dot }} />
+                    {p.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {isAdmin && (
+              <div className="pt-2">
+                <p className="px-3 pb-1 text-[10px] uppercase tracking-wider font-bold text-[var(--color-ink-subtle)]">
+                  Admin
+                </p>
+                <Link href="/admin" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/admin')}`}>
+                  <Settings size={16} /> Dashboard
+                </Link>
+                <Link href="/users" onClick={() => setMobileOpen(false)} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${drawerLink('/users')}`}>
+                  <Users size={16} /> Manage users
+                </Link>
+              </div>
+            )}
+
+            {isLoggedIn && (
+              <button onClick={handleLogout} className="w-full mt-2 flex items-center gap-3 px-3 py-3 rounded-lg text-[15px] font-medium text-[var(--color-danger)] hover:bg-[rgba(220,38,38,.08)]">
+                <LogOut size={18} /> Log out
+              </button>
+            )}
+          </nav>
+
           {!isLoggedIn && (
             <div className="px-4 pt-4 grid grid-cols-2 gap-2">
               <Link href="/Auth" onClick={() => setMobileOpen(false)} className="btn-ghost text-sm">
@@ -437,6 +443,8 @@ export default function Navbar() {
               </Link>
             </div>
           )}
+
+          <div className="h-4" />
         </div>
 
         {/* Footer — theme toggle */}

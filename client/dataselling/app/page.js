@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  ArrowRight, Wallet, ShieldCheck, Zap, Clock,
-  Smartphone, BarChart3, CheckCircle2, Star, ChevronRight
+  ArrowRight, ShieldCheck, Zap, Clock, BarChart3,
+  CheckCircle2, Star, ChevronRight, Infinity as InfinityIcon,
 } from 'lucide-react';
 
 const networks = [
@@ -14,55 +13,123 @@ const networks = [
     id: 'mtn',
     name: 'MTN',
     tagline: 'Best coverage nationwide',
-    accent: '#FFCB05',
-    accentText: '#7A5800',
-    accentSoft: '#FFF7D6',
-    sample: '1GB from GHS 5',
+    tile: '#FFCB05',
+    tileText: '#0A1628',
+    sample: '1GB from GHS 4.50',
   },
   {
     id: 'telecel',
     name: 'Telecel',
     tagline: 'Fast 4G+ in major cities',
-    accent: '#E60000',
-    accentText: '#7A0000',
-    accentSoft: '#FFE5E5',
-    sample: '1GB from GHS 5',
+    tile: '#E60000',
+    tileText: '#FFFFFF',
+    sample: '5GB from GHS 26',
   },
   {
     id: 'at',
     name: 'AT',
     tagline: 'Affordable everyday bundles',
-    accent: '#1E88FF',
-    accentText: '#0B3D91',
-    accentSoft: '#E8F1FF',
-    sample: '1GB from GHS 4',
+    tile: '#DC2626',
+    tileText: '#FFFFFF',
+    sample: '1GB from GHS 3.95',
   },
 ];
+
+// Showcase bundles for the hero — these match real MTN pricing.
+const heroBundles = [
+  { capacity: '1',  price: '4.50',  network: 'mtn' },
+  { capacity: '2',  price: '9.20',  network: 'mtn' },
+  { capacity: '5',  price: '23.50', network: 'mtn' },
+  { capacity: '10', price: '43.50', network: 'mtn' },
+];
+
+function HeroBundleTile({ bundle, tile, tileText, label }) {
+  return (
+    <Link
+      href={`/${bundle.network}`}
+      className="group relative rounded-2xl text-left transition-all overflow-hidden border shadow-md hover:shadow-2xl hover:-translate-y-1"
+      style={{ background: tile, color: tileText, borderColor: `${tileText}1f` }}
+    >
+      <div className="relative px-4 pt-4 pb-4">
+        <span
+          className="pointer-events-none absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-30"
+          style={{ background: tileText }}
+          aria-hidden
+        />
+        <div className="flex items-center justify-between relative">
+          <span
+            className="inline-flex items-center text-[9px] font-bold tracking-[.12em] uppercase px-2 py-0.5 rounded-full"
+            style={{ background: `${tileText}12`, border: `1px solid ${tileText}30`, color: tileText }}
+          >
+            {label}
+          </span>
+          <span className="inline-flex items-center text-[9px] font-bold uppercase tracking-wider opacity-70">
+            <InfinityIcon size={10} className="mr-1" /> No exp.
+          </span>
+        </div>
+        <p className="mt-3 font-black tracking-tight leading-[0.95] tabular-nums text-3xl">
+          {bundle.capacity}<span className="text-base font-extrabold ml-0.5 align-top opacity-80">GB</span>
+        </p>
+      </div>
+      <div
+        className="px-4 py-2.5 flex items-end justify-between"
+        style={{ background: `${tileText}10`, borderTop: `1px solid ${tileText}1a` }}
+      >
+        <div>
+          <p className="text-[9px] uppercase tracking-wider opacity-70 font-semibold">Price</p>
+          <p className="font-black text-sm leading-tight">GH₵{bundle.price}</p>
+        </div>
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full transition-all group-hover:translate-x-0.5"
+          style={{ background: tileText, color: tile }}
+        >
+          Buy <ArrowRight size={10} />
+        </span>
+      </div>
+    </Link>
+  );
+}
 
 function NetworkCard({ n }) {
   return (
     <Link
       href={`/${n.id}`}
-      className="card group p-6 transition-all hover:-translate-y-1 hover:shadow-[0_20px_40px_-20px_rgba(10,22,40,.18)]"
+      className="group relative rounded-2xl overflow-hidden border shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all"
+      style={{ background: n.tile, color: n.tileText, borderColor: `${n.tileText}1f` }}
     >
-      <div className="flex items-start justify-between">
+      <div className="relative p-6">
         <span
-          className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-base font-black"
-          style={{ background: n.accentSoft, color: n.accentText }}
-        >
-          {n.name.slice(0, 2)}
-        </span>
-        <span
-          className="text-xs font-semibold px-2.5 py-1 rounded-full"
-          style={{ background: n.accentSoft, color: n.accentText }}
-        >
-          {n.sample}
-        </span>
+          className="pointer-events-none absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-30"
+          style={{ background: n.tileText }}
+          aria-hidden
+        />
+        <div className="flex items-center justify-between relative">
+          <span
+            className="inline-flex items-center text-[10px] font-bold tracking-[.16em] uppercase px-2.5 py-1 rounded-full"
+            style={{ background: `${n.tileText}14`, border: `1px solid ${n.tileText}30`, color: n.tileText }}
+          >
+            {n.name}
+          </span>
+          <span
+            className="text-[10px] font-bold uppercase tracking-wider opacity-70"
+          >
+            From {n.sample.split('from ')[1]}
+          </span>
+        </div>
+        <h3 className="mt-6 text-2xl font-black tracking-tight">{n.name}</h3>
+        <p className="mt-1 text-sm font-medium opacity-80">{n.tagline}</p>
       </div>
-      <h3 className="mt-5 text-lg font-bold text-[var(--color-ink)]">{n.name} bundles</h3>
-      <p className="mt-1 text-sm text-[var(--color-ink-muted)]">{n.tagline}</p>
-      <div className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-brand-blue-deep)] group-hover:gap-2 transition-all">
-        Choose plan <ArrowRight size={16} />
+      <div
+        className="px-6 py-3 flex items-center justify-between"
+        style={{ background: `${n.tileText}12`, borderTop: `1px solid ${n.tileText}1a` }}
+      >
+        <span className="text-[11px] font-bold uppercase tracking-wider opacity-80">View bundles</span>
+        <span
+          className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+          style={{ background: n.tileText, color: n.tile }}
+        >
+          Open <ArrowRight size={12} />
+        </span>
       </div>
     </Link>
   );
@@ -148,57 +215,29 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Visual preview card */}
+            {/* Real bundle tiles */}
             <div className="relative animate-fadeInUp delay-150">
               <div className="absolute -inset-4 brand-gradient-bg opacity-15 blur-3xl rounded-[2rem]" />
-              <div className="relative card p-6 lg:p-8">
-                <div className="flex items-center justify-between">
+              <div className="relative">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-[var(--color-ink-muted)]">Wallet balance</p>
-                    <p className="mt-1 text-3xl font-black text-[var(--color-brand-navy)]">GHS 248.50</p>
+                    <p className="text-[11px] uppercase tracking-[.18em] font-bold text-[var(--color-ink-muted)]">
+                      Popular bundles
+                    </p>
+                    <p className="text-sm font-semibold text-[var(--color-ink)]">MTN — non-expiry</p>
                   </div>
-                  <button className="btn-accent !py-2 !px-3 text-sm">
-                    <Wallet size={16} /> Top up
-                  </button>
+                  <Link href="/mtn" className="text-xs font-bold inline-flex items-center gap-1 text-[var(--color-brand-blue-deep)] hover:gap-2 transition-all">
+                    See all <ArrowRight size={14} />
+                  </Link>
                 </div>
-
-                <div className="mt-6 grid grid-cols-3 gap-2">
-                  {networks.map(n => (
-                    <div key={n.id} className="rounded-xl border border-[var(--color-line)] p-3 text-center">
-                      <div
-                        className="mx-auto mb-2 w-9 h-9 rounded-lg inline-flex items-center justify-center text-xs font-black"
-                        style={{ background: n.accentSoft, color: n.accentText }}
-                      >
-                        {n.name.slice(0, 2)}
-                      </div>
-                      <p className="text-[11px] font-semibold text-[var(--color-ink)]">{n.name}</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {heroBundles.map(b => (
+                    <HeroBundleTile key={b.capacity} bundle={b} tile="#FFCB05" tileText="#0A1628" label="MTN" />
                   ))}
                 </div>
-
-                <div className="mt-6 space-y-3">
-                  {[
-                    { label: '0244 123 456', net: 'MTN', vol: '2GB', amt: '10.00' },
-                    { label: '0207 654 321', net: 'Telecel', vol: '5GB', amt: '24.00' },
-                    { label: '0265 987 234', net: 'AT', vol: '1GB', amt: '4.50' },
-                  ].map((tx, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-[var(--color-surface-muted)]">
-                      <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 rounded-lg bg-white border border-[var(--color-line)] inline-flex items-center justify-center">
-                          <Smartphone size={16} className="text-[var(--color-brand-blue-deep)]" />
-                        </span>
-                        <div>
-                          <p className="text-sm font-semibold text-[var(--color-ink)]">{tx.vol} &middot; {tx.net}</p>
-                          <p className="text-xs text-[var(--color-ink-muted)]">{tx.label}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-[var(--color-ink)]">GHS {tx.amt}</p>
-                        <span className="chip-success chip !py-0 !px-2">Delivered</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="mt-3 text-[11px] text-center text-[var(--color-ink-muted)]">
+                  Tiles update with live pricing on the buy page.
+                </p>
               </div>
             </div>
           </div>

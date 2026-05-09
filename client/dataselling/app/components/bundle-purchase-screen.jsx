@@ -297,48 +297,62 @@ function BundleTile({ bundle, accent, logoLabel, disabled, onPick }) {
       type="button"
       onClick={onPick}
       disabled={disabled}
-      className={`group relative rounded-2xl p-4 text-left transition-all
-                  ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:-translate-y-0.5 active:translate-y-0'}
-                  shadow-md hover:shadow-xl`}
-      style={{ background: accent.tile, color: accent.tileText }}
+      className={`group relative rounded-2xl text-left transition-all overflow-hidden border
+                  ${disabled ? 'opacity-60 cursor-not-allowed' : 'hover:-translate-y-1 active:translate-y-0'}
+                  shadow-md hover:shadow-2xl`}
+      style={{
+        background: accent.tile,
+        color: accent.tileText,
+        borderColor: `${accent.tileText}1f`,
+      }}
     >
-      {/* Brand pill */}
-      <span
-        className="inline-flex items-center text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
-        style={{ border: `1px solid ${accent.tileText}40`, color: accent.tileText }}
-      >
-        {logoLabel}
-      </span>
+      {/* Top half: brand label + huge capacity */}
+      <div className="relative px-4 pt-4 pb-5">
+        {/* Decorative corner glow */}
+        <span
+          className="pointer-events-none absolute -top-10 -right-10 w-24 h-24 rounded-full blur-2xl opacity-30"
+          style={{ background: accent.tileText }}
+          aria-hidden
+        />
 
-      {/* Capacity */}
-      <p className="mt-3 text-3xl sm:text-4xl font-black leading-none">
-        {bundle.capacity}<span className="text-xl ml-0.5">GB</span>
-      </p>
+        <div className="flex items-center justify-between relative">
+          <span
+            className="inline-flex items-center text-[10px] font-bold tracking-[.12em] uppercase px-2 py-0.5 rounded-full"
+            style={{ background: `${accent.tileText}12`, border: `1px solid ${accent.tileText}30`, color: accent.tileText }}
+          >
+            {logoLabel}
+          </span>
+          <span
+            className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider opacity-70"
+          >
+            <InfinityIcon size={11} className="mr-1" /> No expiry
+          </span>
+        </div>
 
-      {/* Bottom info row */}
-      <div className="mt-4 pt-3 border-t flex items-center justify-between text-[11px] font-medium"
-           style={{ borderColor: `${accent.tileText}25` }}>
-        <div className="flex flex-col">
-          <span className="font-bold text-sm">GH₵{bundle.price}</span>
-          <span className="opacity-70">Price</span>
-        </div>
-        <div className="hidden sm:flex flex-col text-center">
-          <span className="font-bold text-sm">N/A</span>
-          <span className="opacity-70">Rollover</span>
-        </div>
-        <div className="flex flex-col items-end">
-          <InfinityIcon size={14} />
-          <span className="opacity-70">No expiry</span>
-        </div>
+        <p className="mt-4 font-black tracking-tight leading-[0.95] tabular-nums"
+           style={{ fontSize: 'clamp(2rem, 7vw, 3rem)' }}>
+          {bundle.capacity}
+          <span className="text-[0.5em] font-extrabold ml-0.5 align-top opacity-80">GB</span>
+        </p>
       </div>
 
-      {!disabled && (
-        <ArrowRight
-          size={16}
-          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ color: accent.tileText }}
-        />
-      )}
+      {/* Bottom half: price strip */}
+      <div
+        className="px-4 py-3 flex items-end justify-between"
+        style={{ background: `${accent.tileText}10`, borderTop: `1px solid ${accent.tileText}1a` }}
+      >
+        <div>
+          <p className="text-[10px] uppercase tracking-wider opacity-70 font-semibold">Price</p>
+          <p className="font-black text-base sm:text-lg leading-tight">GH₵{bundle.price}</p>
+        </div>
+        <span
+          className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-1 rounded-full transition-all
+                      ${disabled ? '' : 'group-hover:translate-x-0.5'}`}
+          style={{ background: accent.tileText, color: accent.tile }}
+        >
+          Buy <ArrowRight size={11} />
+        </span>
+      </div>
     </button>
   );
 }
