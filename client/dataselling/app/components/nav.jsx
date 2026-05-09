@@ -25,6 +25,7 @@ export default function Navbar() {
   const [username, setUsername] = useState('');
   const [userRole, setUserRole] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
+  const [today, setToday] = useState({ credits: 0, debits: 0 });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [networksOpen, setNetworksOpen] = useState(false);
   const [logoutToast, setLogoutToast] = useState(false);
@@ -42,7 +43,10 @@ export default function Navbar() {
       setUserId(uId);
       setUsername(localStorage.getItem('username') || 'User');
       setUserRole(localStorage.getItem('userrole') || '');
-      if (token) fetchBalance(uId, token);
+      if (token) {
+        fetchBalance(uId, token);
+        fetchTodaySummary(uId, token);
+      }
     }
 
     document.body.style.overflow = mobileOpen ? 'hidden' : 'unset';
@@ -70,6 +74,21 @@ export default function Navbar() {
       if (r.ok) {
         const data = await r.json();
         setWalletBalance(data.balance || 0);
+      }
+    } catch (_) {}
+  }
+
+  async function fetchTodaySummary(uid, token) {
+    try {
+      const r = await fetch(
+        `https://dataswap-ydgo.onrender.com/api/wallet/today-summary?userId=${uid}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (r.ok) {
+        const data = await r.json();
+        if (data?.success) {
+          setToday({ credits: data.credits || 0, debits: data.debits || 0 });
+        }
       }
     } catch (_) {}
   }
@@ -345,8 +364,8 @@ export default function Navbar() {
 
                 <div className="mt-3 flex items-center justify-between text-xs px-2">
                   <span className="text-[var(--color-ink-muted)] uppercase tracking-wider">Today</span>
-                  <span className="text-emerald-500 font-semibold">+GH₵0.00</span>
-                  <span className="text-red-400 font-semibold">−GH₵0.00</span>
+                  <span className="text-emerald-500 font-semibold">+GH₵{Number(today.credits).toFixed(2)}</span>
+                  <span className="text-red-400 font-semibold">−GH₵{Number(today.debits).toFixed(2)}</span>
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-[var(--color-line)] flex items-center gap-3">

@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
+const mongoose = require("mongoose");
 const { User, Transaction } = require("../schema/schema");
 
 dotenv.config();
@@ -364,6 +365,50 @@ router.get("/wallet/transactions", async (req, res) => {
   } catch (error) {
     console.error("Error fetching transaction history:", error);
     return res.status(500).json({ success: false, error: "Failed to fetch transaction historu" });
+  }
+});
+
+// Today's wallet activity (credits + debits since 00:00 local server time)
+router.get("/wallet/today-summary", async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: "User ID is required" });
+    }
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const rows = await Transaction.aggregate([
+      {
+        $match: {
+          userId: new mongoose.Types.ObjectId(userId),
+          status: "completed",
+          createdAt: { $gte: start },
+        },
+      },
+      { $group: { _id: "$type", total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+
+    let credits = 0, debits = 0, creditCount = 0, debitCount = 0;
+    for (const r of rows) {
+      if (r._id === "deposit" || r._id === "refund") {
+        credits += r.total; creditCount += r.count;
+      } else if (r._id === "purchase") {
+        debits += r.total; debitCount += r.count;
+      }
+    }
+
+    return res.json({
+      success: true,
+      currency: "GHS",
+      credits, debits,
+      creditCount, debitCount,
+      sinceISO: start.toISOString(),
+    });
+  } catch (error) {
+    console.error("Error fetching today's wallet summary:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch today's summary" });
   }
 });
 
