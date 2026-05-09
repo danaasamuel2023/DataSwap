@@ -16,9 +16,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Connect to Database
-ConnectDB();
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataOrderRoutes);
@@ -31,8 +28,10 @@ app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-// Start Server
+// Start Server only after DB connects
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+ConnectDB().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 });
