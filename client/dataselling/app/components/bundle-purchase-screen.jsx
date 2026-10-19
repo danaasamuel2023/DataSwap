@@ -44,13 +44,21 @@ export default function BundlePurchaseScreen({ config }) {
     try {
       setChecking(true);
       const r = await axios.get('https://dataswap-ydgo.onrender.com/api/networks-availability');
-      if (r.data?.success) setAvailability(r.data.networks);
+      if (r.data?.success) {
+        // Merge, never replace: a key missing from the response must not silently
+        // read as out-of-stock. Only an explicit `false` closes a network.
+        const next = r.data.networks || {};
+        setAvailability(prev => ({ ...prev, ...next }));
+        return next;
+      }
     } catch (_) {} finally {
       setChecking(false);
     }
+    return null;
   }
 
-  const inStock = availability[c.availabilityKey];
+  // Out of stock only when the backend explicitly says false.
+  const inStock = availability[c.availabilityKey] !== false;
   const validatePhone = (n) => c.phonePattern.test((n || '').trim());
 
   function openConfirm(bundle) {
@@ -67,8 +75,10 @@ export default function BundlePurchaseScreen({ config }) {
     if (!pickedBundle) return;
     setLoading(true);
     try {
-      await fetchAvailability();
-      if (!availability[c.availabilityKey]) {
+      // Read the fetched value directly — `availability` is still the old state
+      // inside this closure and would make the re-check a no-op.
+      const fresh = await fetchAvailability();
+      if (fresh && fresh[c.availabilityKey] === false) {
         setError(`${c.shortName} just went out of stock.`);
         setConfirmOpen(false); setLoading(false); return;
       }

@@ -4,12 +4,20 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader2, AlertCircle, CheckCircle2, ToggleLeft } from 'lucide-react';
 
+// Keyed by the canonical network stored server-side, not by display alias —
+// a row whose key the backend doesn't recognise can never be toggled.
 const NETWORK_LABELS = {
   mtn: { name: 'MTN', dot: '#FFCB05' },
-  ishare: { name: 'AT iShare', dot: '#ED1C24' },
-  tigo: { name: 'Tigo', dot: '#0088CC' },
+  AT_PREMIUM: { name: 'AT iShare', dot: '#ED1C24' },
   telecel: { name: 'Telecel', dot: '#E60000' },
+  tigo: { name: 'Tigo', dot: '#0088CC' },
+  at: { name: 'AT (legacy)', dot: '#ED1C24' },
+  'afa-registration': { name: 'AFA Registration', dot: '#7C3AED' },
 };
+
+// Fixed render order; also stops response-only aliases (e.g. `ishare`) from
+// showing up as a second, conflicting row for the same network.
+const TOGGLEABLE = ['mtn', 'AT_PREMIUM', 'telecel', 'tigo', 'at', 'afa-registration'];
 
 export default function NetworkToggle() {
   const [networks, setNetworks] = useState({ mtn: true, telecel: true, ishare: true });
@@ -27,7 +35,7 @@ export default function NetworkToggle() {
       const r = await axios.get('https://dataswap-ydgo.onrender.com/api/networks-availability', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (r.data?.success) setNetworks(r.data.networks);
+      if (r.data?.success) setNetworks(p => ({ ...p, ...(r.data.networks || {}) }));
       else setError('Failed to fetch network status.');
     } catch (err) {
       setError('Error connecting to server.');
@@ -87,7 +95,8 @@ export default function NetworkToggle() {
           </div>
         ) : (
           <div className="card divide-y divide-[var(--color-line)]">
-            {Object.entries(networks).map(([net, isAvail]) => {
+            {TOGGLEABLE.map((net) => {
+              const isAvail = networks[net] !== false;
               const meta = NETWORK_LABELS[net] || { name: net.toUpperCase(), dot: '#94A0B8' };
               return (
                 <div key={net} className="flex items-center justify-between p-5">

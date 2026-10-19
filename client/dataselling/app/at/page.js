@@ -8,7 +8,8 @@ const config = {
   title: 'AT iShare Bundles',
   subtitle: 'Affordable iShare bundles for any AT number.',
   network: 'AT_PREMIUM',
-  availabilityKey: 'ishare',
+  // Must match the `network` key stored in NetworkAvailability, not a display alias.
+  availabilityKey: 'AT_PREMIUM',
   logoLabel: 'AT',
   accent: {
     tile: '#DC2626',

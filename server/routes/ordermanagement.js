@@ -681,14 +681,33 @@ router.get('/users/:id/transactions', auth, authorize('admin'), async (req, res)
 // Import the NetworkAvailability model
 
 // Initialize network availability - run this when your server starts
+// Canonical network keys, exactly as stored in NetworkAvailability.network.
+const KNOWN_NETWORKS = ['mtn', 'tigo', 'telecel', 'afa-registration', 'at', 'AT_PREMIUM'];
+
+// Aliases callers may send (display names, casing variants) -> canonical key.
+// Blind .toLowerCase() breaks AT_PREMIUM, so map instead of lowercasing.
+const NETWORK_ALIASES = {
+  mtn: 'mtn',
+  tigo: 'tigo',
+  telecel: 'telecel',
+  'afa-registration': 'afa-registration',
+  at: 'at',
+  at_premium: 'AT_PREMIUM',
+  atpremium: 'AT_PREMIUM',
+  ishare: 'AT_PREMIUM',
+  'at-ishare': 'AT_PREMIUM',
+};
+
+const canonicalNetwork = (name) =>
+  NETWORK_ALIASES[String(name || '').trim().toLowerCase()] || null;
+
 const initializeNetworkAvailability = async () => {
-  try {
-    const networks = ['mtn', 'tigo', 'telecel','afa-registration', 'at','AT_PREMIUM'];
-    
-    for (const network of networks) {
-      // Check if entry exists
+  for (const network of KNOWN_NETWORKS) {
+    // Per-network try/catch: one failure (dup-key race on a cold start, a bad
+    // enum value) must not strand every network after it in the list.
+    try {
       const exists = await NetworkAvailability.findOne({ network });
-      
+
       // If not, create it with default value (available)
       if (!exists) {
         await NetworkAvailability.create({
@@ -698,9 +717,9 @@ const initializeNetworkAvailability = async () => {
         });
         console.log(`Initialized availability for ${network}`);
       }
+    } catch (error) {
+      console.error(`Error initializing network availability for ${network}:`, error.message);
     }
-  } catch (error) {
-    console.error('Error initializing network availability:', error);
   }
 };
 
@@ -719,17 +738,18 @@ router.post('/toggle-network', async (req, res) => {
       });
     }
     
-    // Make sure network is one of the allowed values
-    if (!['mtn', 'at', 'telecel','afa-registration','AT_PREMIUM'].includes(network.toLowerCase())) {
+    // Resolve aliases/casing to the canonical stored key
+    const key = canonicalNetwork(network);
+    if (!key) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid network. Must be one of: mtn, tigo, telecel'
+        error: `Invalid network. Must be one of: ${KNOWN_NETWORKS.join(', ')}`
       });
     }
-    
+
     // Find and update the network availability
     const networkEntry = await NetworkAvailability.findOneAndUpdate(
-      { network: network.toLowerCase() },
+      { network: key },
       { 
         available, 
         updatedAt: new Date() 
@@ -765,7 +785,16 @@ router.get('/networks-availability', async (req, res) => {
     networks.forEach(net => {
       availability[net.network] = net.available;
     });
-    
+
+    // Any canonical key with no row yet defaults to available, so a missing
+    // document never reads as "out of stock" on the storefront.
+    KNOWN_NETWORKS.forEach(net => {
+      if (availability[net] === undefined) availability[net] = true;
+    });
+
+    // Emit display aliases too, so a client asking for `ishare` still resolves.
+    availability.ishare = availability.AT_PREMIUM;
+
     return res.json({
       success: true,
       networks: availability
