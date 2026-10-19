@@ -727,7 +727,7 @@ const initializeNetworkAvailability = async () => {
 initializeNetworkAvailability();
 
 // Admin endpoint to toggle network availability
-router.post('/toggle-network', async (req, res) => {
+router.post('/toggle-network', auth, authorize('admin'), async (req, res) => {
   try {
     const { network, available } = req.body;
     
